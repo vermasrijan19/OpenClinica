@@ -113,7 +113,7 @@ public class XsltTransformJob extends QuartzJobBean {
 
     @Override
     protected void executeInternal(JobExecutionContext context) {
-        logger.info("Job " + context.getJobDetail().getFullName() + " started.");
+        logger.info("Job " + context.getJobDetail().getKey().toString() + " started.");
         initDependencies(context.getScheduler());
         // need to generate a Locale for emailing users with i18n
         // TODO make dynamic?
@@ -247,7 +247,7 @@ public class XsltTransformJob extends QuartzJobBean {
                 fId = fileID.intValue();
                 logger.debug("found " + fId + " and " + ODMXMLFileName);
             }
-            logger.info("Finished ODM generation of job " + context.getJobDetail().getFullName());
+            logger.info("Finished ODM generation of job " + context.getJobDetail().getKey().toString());
 
             // create dirs
             File output = new File(outputPath);
@@ -600,7 +600,7 @@ public class XsltTransformJob extends QuartzJobBean {
             if (datasetBean != null)
                 resetArchiveDataset(datasetBean.getId());
 
-            logger.info("Job " + context.getJobDetail().getFullName() + " finished.");
+            logger.info("Job " + context.getJobDetail().getKey().toString() + " finished.");
         }
 
     }
@@ -836,9 +836,8 @@ public class XsltTransformJob extends QuartzJobBean {
             JobDetail jobDetail = context.getJobDetail();
             JobDataMap dataMap = jobDetail.getJobDataMap();
             dataMap.put("successMsg", message);
-            jobDetail.setJobDataMap(dataMap);
-            // replace the job with the extra data
-            scheduler.addJob(jobDetail, true);
+            // replace the job with the extra data (non-durable job, so allow storing while it has triggers)
+            scheduler.addJob(jobDetail, true, true);
 
         } catch (SchedulerException e) {
             throw new IllegalStateException("Error processing post success message", e);
@@ -853,9 +852,8 @@ public class XsltTransformJob extends QuartzJobBean {
             JobDetail jobDetail = context.getJobDetail();
             JobDataMap dataMap = jobDetail.getJobDataMap();
             dataMap.put("failMessage", message);
-            jobDetail.setJobDataMap(dataMap);
-            // replace the job with the extra data
-            scheduler.addJob(jobDetail, true);
+            // replace the job with the extra data (non-durable job, so allow storing while it has triggers)
+            scheduler.addJob(jobDetail, true, true);
 
         } catch (SchedulerException e) {
             throw new IllegalStateException("Error processing post error message", e);

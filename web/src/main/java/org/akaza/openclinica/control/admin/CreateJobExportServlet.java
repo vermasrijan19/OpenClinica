@@ -1,5 +1,7 @@
 package org.akaza.openclinica.control.admin;
 
+import org.quartz.impl.triggers.SimpleTriggerImpl;
+import org.akaza.openclinica.job.QuartzNames;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -31,7 +33,7 @@ import org.akaza.openclinica.web.job.TriggerService;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
 import org.quartz.impl.StdScheduler;
-import org.springframework.scheduling.quartz.JobDetailBean;
+import org.quartz.impl.JobDetailImpl;
 
 /**
  *
@@ -138,7 +140,7 @@ public class CreateJobExportServlet extends SecureController {
             forwardPage(Page.CREATE_JOB_EXPORT);
         } else if ("confirmall".equalsIgnoreCase(action)) {
             // collect form information
-            HashMap errors = validateForm(fp, request, scheduler.getTriggerNames(XsltTriggerService.TRIGGER_GROUP_NAME), "");
+            HashMap errors = validateForm(fp, request, QuartzNames.triggerNames(scheduler, XsltTriggerService.TRIGGER_GROUP_NAME), "");
 
             if (!errors.isEmpty()) {
                 // set errors to request
@@ -217,7 +219,7 @@ public class CreateJobExportServlet extends SecureController {
                     epBean.setPostProcLocation(prePocLoc);
                 }
                 extractUtils.setAllProps(epBean, dsBean, sdfDir, datasetFilePath);
-                SimpleTrigger trigger = null;
+                SimpleTriggerImpl trigger = null;
 
                 trigger = xsltService.generateXsltTrigger(xsltPath,
                         generalFileDir, // xml_file_path
@@ -242,13 +244,12 @@ public class CreateJobExportServlet extends SecureController {
                 trigger.getJobDataMap().put(XsltTriggerService.JOB_NAME, jobName);
 				trigger.getJobDataMap().put("job_type", "exportJob");
 
-                JobDetailBean jobDetailBean = new JobDetailBean();
+                JobDetailImpl jobDetailBean = new JobDetailImpl();
                 jobDetailBean.setGroup(xsltService.getTriggerGroupNameForExportJobs());
-                jobDetailBean.setName(trigger.getName());
+                jobDetailBean.setName(trigger.getKey().getName());
                 jobDetailBean.setJobClass(org.akaza.openclinica.job.XsltStatefulJob.class);
                 jobDetailBean.setJobDataMap(trigger.getJobDataMap());
                 jobDetailBean.setDurability(true); // need durability?
-                jobDetailBean.setVolatility(false);
 
                 // set to the scheduler
                 try {

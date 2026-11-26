@@ -48,7 +48,7 @@ import org.akaza.openclinica.web.job.XalanTriggerService;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
 import org.quartz.impl.StdScheduler;
-import org.springframework.scheduling.quartz.JobDetailBean;
+import org.quartz.impl.JobDetailImpl;
 
 /**
  * Take a dataset and show it in different formats,<BR/> Detect whether or not
@@ -237,13 +237,12 @@ public class ExportDatasetServlet extends SecureController {
                             generalFileDir + "output.sql", db.getId());
                     scheduler = getScheduler();
 
-                    JobDetailBean jobDetailBean = new JobDetailBean();
+                    JobDetailImpl jobDetailBean = new JobDetailImpl();
                     jobDetailBean.setGroup(xts.TRIGGER_GROUP_NAME);
-                    jobDetailBean.setName(simpleTrigger.getName());
+                    jobDetailBean.setName(simpleTrigger.getKey().getName());
                     jobDetailBean.setJobClass(org.akaza.openclinica.web.job.XalanStatefulJob.class);
                     jobDetailBean.setJobDataMap(simpleTrigger.getJobDataMap());
                     jobDetailBean.setDurability(true); // need durability?
-                    jobDetailBean.setVolatility(false);
 
                     try {
                         Date dateStart = scheduler.scheduleJob(jobDetailBean, simpleTrigger);

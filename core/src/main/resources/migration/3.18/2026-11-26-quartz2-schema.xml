@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9 http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
+
+    <!--
+        Quartz 1.8 -> 2.3 job store schema (required by Spring 4, which dropped Quartz 1.x support).
+
+        Rebuilds the oc_qrtz_* tables in the Quartz 2.3 layout (see tables_postgres.sql in the
+        quartz-2.3.2 jar) and copies every row across:
+          - adds SCHED_NAME = 'schedulerFactoryBean', the name the web and ws schedulers run under
+            (the schedulerFactoryBean bean id, also set explicitly as schedulerName);
+          - is_stateful -> is_nonconcurrent + is_update_data (how Quartz 2 models a 1.x StatefulJob);
+          - drops is_volatile and the job/trigger listener tables, which Quartz 2 no longer has;
+          - fired triggers get sched_time = fired_time;
+          - blob columns become BYTEA; columns that Liquibase created as OID (large objects, fresh
+            installs) are read with lo_get and the large objects unlinked afterwards.
+        Skipped when oc_qrtz_job_details already has a sched_name column.
+    -->
+    <changeSet author="sverma" id="2026-11-26-quartz2-schema-1" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                select count(*) from information_schema.columns
+                where table_schema = current_schema() and table_name = 'oc_qrtz_job_details' and column_name = 'sched_name'
+            </sqlCheck>
+        </preConditions>
+        <sql splitStatements="false"><![CDATA[
+DO $quartz2$
+DECLARE
+    sched CONSTANT text := 'schedulerFactoryBean';
+    jd_blob text;
+    trg_blob text;
+    btr_blob text;
+    cal_blob text;
+    lo oid;
+
+    -- 'lo_get(col)' for an OID (large object) column, 'col' for BYTEA
+BEGIN
+    SELECT CASE data_type WHEN 'oid' THEN 'lo_get(job_data)' ELSE 'job_data' END INTO jd_blob
+      FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'oc_qrtz_job_details' AND column_name = 'job_data';
+    SELECT CASE data_type WHEN 'oid' THEN 'lo_get(job_data)' ELSE 'job_data' END INTO trg_blob
+      FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'oc_qrtz_triggers' AND column_name = 'job_data';
+    SELECT CASE data_type WHEN 'oid' THEN 'lo_get(blob_data)' ELSE 'blob_data' END INTO btr_blob
+      FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'oc_qrtz_blob_triggers' AND column_name = 'blob_data';
+    SELECT CASE data_type WHEN 'oid' THEN 'lo_get(calendar)' ELSE 'calendar' END INTO cal_blob
+      FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'oc_qrtz_calendars' AND column_name = 'calendar';
+
+    CREATE TABLE oc_qrtz2_job_details (
+        sched_name        VARCHAR(120) NOT NULL,
+        job_name          VARCHAR(200) NOT NULL,
+        job_group         VARCHAR(200) NOT NULL,
+        description       VARCHAR(250) NULL,
+        job_class_name    VARCHAR(250) NOT NULL,
+        is_durable        BOOL         NOT NULL,
+        is_nonconcurrent  BOOL         NOT NULL,
+        is_update_data    BOOL         NOT NULL,
+        requests_recovery BOOL         NOT NULL,
+        job_data          BYTEA        NULL,
+        CONSTRAINT pk_oc_qrtz_job_details PRIMARY KEY (sched_name, job_name, job_group)
+    );
+    CREATE TABLE oc_qrtz2_triggers (
+        sched_name     VARCHAR(120) NOT NULL,
+        trigger_name   VARCHAR(200) NOT NULL,
+        trigger_group  VARCHAR(200) NOT NULL,
+        job_name       VARCHAR(200) NOT NULL,
+        job_group      VARCHAR(200) NOT NULL,
+        description    VARCHAR(250) NULL,
+        next_fire_time BIGINT       NULL,
+        prev_fire_time BIGINT       NULL,
+        priority       INTEGER      NULL,
+        trigger_state  VARCHAR(16)  NOT NULL,
+        trigger_type   VARCHAR(8)   NOT NULL,
+        start_time     BIGINT       NOT NULL,
+        end_time       BIGINT       NULL,
+        calendar_name  VARCHAR(200) NULL,
+        misfire_instr  SMALLINT     NULL,
+        job_data       BYTEA        NULL,
+        CONSTRAINT pk_oc_qrtz_triggers PRIMARY KEY (sched_name, trigger_name, trigger_group),
+        CONSTRAINT fk_oc_qrtz_triggers_job FOREIGN KEY (sched_name, job_name, job_group)
+            REFERENCES oc_qrtz2_job_details (sched_name, job_name, job_group)
+    );
+    CREATE TABLE oc_qrtz2_simple_triggers (
+        sched_name      VARCHAR(120) NOT NULL,
+        trigger_name    VARCHAR(200) NOT NULL,
+        trigger_group   VARCHAR(200) NOT NULL,
+        repeat_count    BIGINT       NOT NULL,
+        repeat_interval BIGINT       NOT NULL,
+        times_triggered BIGINT       NOT NULL,
+        CONSTRAINT pk_oc_qrtz_simple_triggers PRIMARY KEY (sched_name, trigger_name, trigger_group),
+        CONSTRAINT fk_oc_qrtz_simple_triggers FOREIGN KEY (sched_name, trigger_name, trigger_group)
+            REFERENCES oc_qrtz2_triggers (sched_name, trigger_name, trigger_group)
+    );
+    CREATE TABLE oc_qrtz2_cron_triggers (
+        sched_name      VARCHAR(120) NOT NULL,
+        trigger_name    VARCHAR(200) NOT NULL,
+        trigger_group   VARCHAR(200) NOT NULL,
+        cron_expression VARCHAR(120) NOT NULL,
+        time_zone_id    VARCHAR(80),
+        CONSTRAINT pk_oc_qrtz_cron_triggers PRIMARY KEY (sched_name, trigger_name, trigger_group),
+        CONSTRAINT fk_oc_qrtz_cron_triggers FOREIGN KEY (sched_name, trigger_name, trigger_group)
+            REFERENCES oc_qrtz2_triggers (sched_name, trigger_name, trigger_group)
+    );
+    CREATE TABLE oc_qrtz2_simprop_triggers (
+        sched_name    VARCHAR(120)   NOT NULL,
+        trigger_name  VARCHAR(200)   NOT NULL,
+        trigger_group VARCHAR(200)   NOT NULL,
+        str_prop_1    VARCHAR(512)   NULL,
+        str_prop_2    VARCHAR(512)   NULL,
+        str_prop_3    VARCHAR(512)   NULL,
+        int_prop_1    INT            NULL,
+        int_prop_2    INT            NULL,
+        long_prop_1   BIGINT         NULL,
+        long_prop_2   BIGINT         NULL,
+        dec_prop_1    NUMERIC(13, 4) NULL,
+        dec_prop_2    NUMERIC(13, 4) NULL,
+        bool_prop_1   BOOL           NULL,
+        bool_prop_2   BOOL           NULL,
+        CONSTRAINT pk_oc_qrtz_simprop_triggers PRIMARY KEY (sched_name, trigger_name, trigger_group),
+        CONSTRAINT fk_oc_qrtz_simprop_triggers FOREIGN KEY (sched_name, trigger_name, trigger_group)
+            REFERENCES oc_qrtz2_triggers (sched_name, trigger_name, trigger_group)
+    );
+    CREATE TABLE oc_qrtz2_blob_triggers (
+        sched_name    VARCHAR(120) NOT NULL,
+        trigger_name  VARCHAR(200) NOT NULL,
+        trigger_group VARCHAR(200) NOT NULL,
+        blob_data     BYTEA        NULL,
+        CONSTRAINT pk_oc_qrtz_blob_triggers PRIMARY KEY (sched_name, trigger_name, trigger_group),
+        CONSTRAINT fk_oc_qrtz_blob_triggers FOREIGN KEY (sched_name, trigger_name, trigger_group)
+            REFERENCES oc_qrtz2_triggers (sched_name, trigger_name, trigger_group)
+    );
+    CREATE TABLE oc_qrtz2_calendars (
+        sched_name    VARCHAR(120) NOT NULL,
+        calendar_name VARCHAR(200) NOT NULL,
+        calendar      BYTEA        NOT NULL,
+        CONSTRAINT pk_oc_qrtz_calendars PRIMARY KEY (sched_name, calendar_name)
+    );
+    CREATE TABLE oc_qrtz2_paused_trigger_grps (
+        sched_name    VARCHAR(120) NOT NULL,
+        trigger_group VARCHAR(200) NOT NULL,
+        CONSTRAINT pk_oc_qrtz_paused_trigger_grps PRIMARY KEY (sched_name, trigger_group)
+    );
+    CREATE TABLE oc_qrtz2_fired_triggers (
+        sched_name        VARCHAR(120) NOT NULL,
+        entry_id          VARCHAR(95)  NOT NULL,
+        trigger_name      VARCHAR(200) NOT NULL,
+        trigger_group     VARCHAR(200) NOT NULL,
+        instance_name     VARCHAR(200) NOT NULL,
+        fired_time        BIGINT       NOT NULL,
+        sched_time        BIGINT       NOT NULL,
+        priority          INTEGER      NOT NULL,
+        state             VARCHAR(16)  NOT NULL,
+        job_name          VARCHAR(200) NULL,
+        job_group         VARCHAR(200) NULL,
+        is_nonconcurrent  BOOL         NULL,
+        requests_recovery BOOL         NULL,
+        CONSTRAINT pk_oc_qrtz_fired_triggers PRIMARY KEY (sched_name, entry_id)
+    );
+    CREATE TABLE oc_qrtz2_scheduler_state (
+        sched_name        VARCHAR(120) NOT NULL,
+        instance_name     VARCHAR(200) NOT NULL,
+        last_checkin_time BIGINT       NOT NULL,
+        checkin_interval  BIGINT       NOT NULL,
+        CONSTRAINT pk_oc_qrtz_scheduler_state PRIMARY KEY (sched_name, instance_name)
+    );
+    CREATE TABLE oc_qrtz2_locks (
+        sched_name VARCHAR(120) NOT NULL,
+        lock_name  VARCHAR(40)  NOT NULL,
+        CONSTRAINT pk_oc_qrtz_locks PRIMARY KEY (sched_name, lock_name)
+    );
+
+    EXECUTE format('INSERT INTO oc_qrtz2_job_details SELECT %L, job_name, job_group, description, job_class_name,
+                        is_durable, is_stateful, is_stateful, requests_recovery, %s FROM oc_qrtz_job_details', sched, jd_blob);
+    EXECUTE format('INSERT INTO oc_qrtz2_triggers SELECT %L, trigger_name, trigger_group, job_name, job_group, description,
+                        next_fire_time, prev_fire_time, priority, trigger_state, trigger_type, start_time, end_time,
+                        calendar_name, misfire_instr, %s FROM oc_qrtz_triggers', sched, trg_blob);
+    INSERT INTO oc_qrtz2_simple_triggers SELECT sched, trigger_name, trigger_group, repeat_count, repeat_interval, times_triggered
+        FROM oc_qrtz_simple_triggers;
+    INSERT INTO oc_qrtz2_cron_triggers SELECT sched, trigger_name, trigger_group, cron_expression, time_zone_id
+        FROM oc_qrtz_cron_triggers;
+    EXECUTE format('INSERT INTO oc_qrtz2_blob_triggers SELECT %L, trigger_name, trigger_group, %s FROM oc_qrtz_blob_triggers', sched, btr_blob);
+    EXECUTE format('INSERT INTO oc_qrtz2_calendars SELECT %L, calendar_name, %s FROM oc_qrtz_calendars', sched, cal_blob);
+    INSERT INTO oc_qrtz2_paused_trigger_grps SELECT sched, trigger_group FROM oc_qrtz_paused_trigger_grps;
+    INSERT INTO oc_qrtz2_fired_triggers SELECT sched, entry_id, trigger_name, trigger_group, instance_name, fired_time, fired_time,
+        priority, state, job_name, job_group, is_stateful, requests_recovery FROM oc_qrtz_fired_triggers;
+    INSERT INTO oc_qrtz2_scheduler_state SELECT sched, instance_name, last_checkin_time, checkin_interval FROM oc_qrtz_scheduler_state;
+    INSERT INTO oc_qrtz2_locks SELECT sched, lock_name FROM oc_qrtz_locks;
+
+    -- release the large objects behind OID columns (no-op for BYTEA)
+    IF jd_blob LIKE 'lo_get%' THEN
+        FOR lo IN SELECT job_data FROM oc_qrtz_job_details WHERE job_data IS NOT NULL LOOP PERFORM lo_unlink(lo); END LOOP;
+    END IF;
+    IF trg_blob LIKE 'lo_get%' THEN
+        FOR lo IN SELECT job_data FROM oc_qrtz_triggers WHERE job_data IS NOT NULL LOOP PERFORM lo_unlink(lo); END LOOP;
+    END IF;
+    IF btr_blob LIKE 'lo_get%' THEN
+        FOR lo IN SELECT blob_data FROM oc_qrtz_blob_triggers WHERE blob_data IS NOT NULL LOOP PERFORM lo_unlink(lo); END LOOP;
+    END IF;
+    IF cal_blob LIKE 'lo_get%' THEN
+        FOR lo IN SELECT calendar FROM oc_qrtz_calendars WHERE calendar IS NOT NULL LOOP PERFORM lo_unlink(lo); END LOOP;
+    END IF;
+
+    DROP TABLE oc_qrtz_job_listeners, oc_qrtz_trigger_listeners, oc_qrtz_simple_triggers, oc_qrtz_cron_triggers,
+               oc_qrtz_blob_triggers, oc_qrtz_triggers, oc_qrtz_job_details, oc_qrtz_calendars,
+               oc_qrtz_paused_trigger_grps, oc_qrtz_fired_triggers, oc_qrtz_scheduler_state, oc_qrtz_locks;
+
+    ALTER TABLE oc_qrtz2_job_details         RENAME TO oc_qrtz_job_details;
+    ALTER TABLE oc_qrtz2_triggers            RENAME TO oc_qrtz_triggers;
+    ALTER TABLE oc_qrtz2_simple_triggers     RENAME TO oc_qrtz_simple_triggers;
+    ALTER TABLE oc_qrtz2_cron_triggers       RENAME TO oc_qrtz_cron_triggers;
+    ALTER TABLE oc_qrtz2_simprop_triggers    RENAME TO oc_qrtz_simprop_triggers;
+    ALTER TABLE oc_qrtz2_blob_triggers       RENAME TO oc_qrtz_blob_triggers;
+    ALTER TABLE oc_qrtz2_calendars           RENAME TO oc_qrtz_calendars;
+    ALTER TABLE oc_qrtz2_paused_trigger_grps RENAME TO oc_qrtz_paused_trigger_grps;
+    ALTER TABLE oc_qrtz2_fired_triggers      RENAME TO oc_qrtz_fired_triggers;
+    ALTER TABLE oc_qrtz2_scheduler_state     RENAME TO oc_qrtz_scheduler_state;
+    ALTER TABLE oc_qrtz2_locks               RENAME TO oc_qrtz_locks;
+
+    -- indexes from Quartz 2.3.2 tables_postgres.sql
+    CREATE INDEX idx_oc_qrtz_j_req_recovery ON oc_qrtz_job_details (sched_name, requests_recovery);
+    CREATE INDEX idx_oc_qrtz_j_grp ON oc_qrtz_job_details (sched_name, job_group);
+    CREATE INDEX idx_oc_qrtz_t_j ON oc_qrtz_triggers (sched_name, job_name, job_group);
+    CREATE INDEX idx_oc_qrtz_t_jg ON oc_qrtz_triggers (sched_name, job_group);
+    CREATE INDEX idx_oc_qrtz_t_c ON oc_qrtz_triggers (sched_name, calendar_name);
+    CREATE INDEX idx_oc_qrtz_t_g ON oc_qrtz_triggers (sched_name, trigger_group);
+    CREATE INDEX idx_oc_qrtz_t_state ON oc_qrtz_triggers (sched_name, trigger_state);
+    CREATE INDEX idx_oc_qrtz_t_n_state ON oc_qrtz_triggers (sched_name, trigger_name, trigger_group, trigger_state);
+    CREATE INDEX idx_oc_qrtz_t_n_g_state ON oc_qrtz_triggers (sched_name, trigger_group, trigger_state);
+    CREATE INDEX idx_oc_qrtz_t_next_fire_time ON oc_qrtz_triggers (sched_name, next_fire_time);
+    CREATE INDEX idx_oc_qrtz_t_nft_st ON oc_qrtz_triggers (sched_name, trigger_state, next_fire_time);
+    CREATE INDEX idx_oc_qrtz_t_nft_misfire ON oc_qrtz_triggers (sched_name, misfire_instr, next_fire_time);
+    CREATE INDEX idx_oc_qrtz_t_nft_st_misfire ON oc_qrtz_triggers (sched_name, misfire_instr, next_fire_time, trigger_state);
+    CREATE INDEX idx_oc_qrtz_t_nft_st_misfire_grp ON oc_qrtz_triggers (sched_name, misfire_instr, next_fire_time, trigger_group, trigger_state);
+    CREATE INDEX idx_oc_qrtz_ft_trig_inst_name ON oc_qrtz_fired_triggers (sched_name, instance_name);
+    CREATE INDEX idx_oc_qrtz_ft_inst_job_req_rcvry ON oc_qrtz_fired_triggers (sched_name, instance_name, requests_recovery);
+    CREATE INDEX idx_oc_qrtz_ft_j_g ON oc_qrtz_fired_triggers (sched_name, job_name, job_group);
+    CREATE INDEX idx_oc_qrtz_ft_jg ON oc_qrtz_fired_triggers (sched_name, job_group);
+    CREATE INDEX idx_oc_qrtz_ft_t_g ON oc_qrtz_fired_triggers (sched_name, trigger_name, trigger_group);
+    CREATE INDEX idx_oc_qrtz_ft_tg ON oc_qrtz_fired_triggers (sched_name, trigger_group);
+END
+$quartz2$
+        ]]></sql>
+    </changeSet>
+</databaseChangeLog>

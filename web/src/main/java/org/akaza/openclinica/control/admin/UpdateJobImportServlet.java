@@ -1,5 +1,8 @@
 package org.akaza.openclinica.control.admin;
 
+import org.akaza.openclinica.job.QuartzNames;
+import org.quartz.JobKey;
+import org.quartz.TriggerKey;
 import org.akaza.openclinica.bean.managestudy.StudyBean;
 import org.akaza.openclinica.control.SpringServletAccess;
 import org.akaza.openclinica.control.core.SecureController;
@@ -18,7 +21,7 @@ import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
 import org.quartz.impl.StdScheduler;
-import org.springframework.scheduling.quartz.JobDetailBean;
+import org.quartz.impl.JobDetailImpl;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -56,7 +59,7 @@ public class UpdateJobImportServlet extends SecureController {
     private void setUpServlet(Trigger trigger) throws Exception {
         FormProcessor fp2 = new FormProcessor(request);
 
-        request.setAttribute(CreateJobImportServlet.JOB_NAME, trigger.getName());
+        request.setAttribute(CreateJobImportServlet.JOB_NAME, trigger.getKey().getName());
         request.setAttribute(CreateJobImportServlet.JOB_DESC, trigger.getDescription());
 
         dataMap = trigger.getJobDataMap();
@@ -120,13 +123,13 @@ public class UpdateJobImportServlet extends SecureController {
         String triggerName = fp.getString("tname");
         scheduler = getScheduler();
         logger.debug("found trigger name " + triggerName);
-        Trigger trigger = scheduler.getTrigger(triggerName, TRIGGER_IMPORT_GROUP);
-        //System.out.println("found trigger from the other side " + trigger.getFullName());
+        Trigger trigger = scheduler.getTrigger(TriggerKey.triggerKey(triggerName, TRIGGER_IMPORT_GROUP));
+        //System.out.println("found trigger from the other side " + trigger.getKey().toString());
         if (StringUtil.isBlank(action)) {
             setUpServlet(trigger);
             forwardPage(Page.UPDATE_JOB_IMPORT);
         } else if ("confirmall".equalsIgnoreCase(action)) {
-            HashMap errors = triggerService.validateImportJobForm(fp, request, scheduler.getTriggerNames("DEFAULT"), trigger.getName());
+            HashMap errors = triggerService.validateImportJobForm(fp, request, QuartzNames.triggerNames(scheduler, "DEFAULT"), trigger.getKey().getName());
             if (!errors.isEmpty()) {
                 // send back
                 addPageMessage("Your modifications caused an error, please see the messages for more information.");
@@ -140,16 +143,15 @@ public class UpdateJobImportServlet extends SecureController {
                 Date startDate = trigger.getStartTime();
                 trigger = triggerService.generateImportTrigger(fp, sm.getUserBean(), study, startDate, LocaleResolver.getLocale(request).getLanguage());
                 // scheduler = getScheduler();
-                JobDetailBean jobDetailBean = new JobDetailBean();
+                JobDetailImpl jobDetailBean = new JobDetailImpl();
                 jobDetailBean.setGroup(TRIGGER_IMPORT_GROUP);
-                jobDetailBean.setName(trigger.getName());
+                jobDetailBean.setName(trigger.getKey().getName());
                 jobDetailBean.setJobClass(org.akaza.openclinica.web.job.ImportStatefulJob.class);
                 jobDetailBean.setJobDataMap(trigger.getJobDataMap());
                 jobDetailBean.setDurability(true); // need durability?
-                jobDetailBean.setVolatility(false);
 
                 try {
-                    scheduler.deleteJob(triggerName, TRIGGER_IMPORT_GROUP);
+                    scheduler.deleteJob(JobKey.jobKey(triggerName, TRIGGER_IMPORT_GROUP));
                     Date dateStart = scheduler.scheduleJob(jobDetailBean, trigger);
 
                     addPageMessage("Your job has been successfully modified.");

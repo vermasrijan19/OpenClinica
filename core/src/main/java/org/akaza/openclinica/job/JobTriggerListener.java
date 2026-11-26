@@ -8,6 +8,7 @@
 package org.akaza.openclinica.job;
 
 import org.quartz.JobExecutionContext;
+import org.quartz.Trigger.CompletedExecutionInstruction;
 import org.quartz.Trigger;
 import org.quartz.listeners.TriggerListenerSupport;
 import org.slf4j.Logger;
@@ -46,13 +47,14 @@ public class JobTriggerListener extends TriggerListenerSupport {
     }
 
     @Override
-    public void triggerComplete(Trigger trigger, JobExecutionContext context, int triggerInstructionCode) {
+    public void triggerComplete(Trigger trigger, JobExecutionContext context,
+            CompletedExecutionInstruction triggerInstructionCode) {
         super.triggerComplete(trigger, context, triggerInstructionCode);
         logTriggerInfo(trigger, "Trigger {} complete");
     }
 
     private void logTriggerInfo(Trigger trigger, String message) {
-        LOG.debug(message, trigger.getName());
+        LOG.debug(message, trigger.getKey().getName());
     }
 
 

@@ -1,5 +1,6 @@
 package org.akaza.openclinica.control.admin;
 
+import org.quartz.TriggerKey;
 import org.akaza.openclinica.bean.admin.AuditEventBean;
 import org.akaza.openclinica.bean.admin.TriggerBean;
 import org.akaza.openclinica.bean.extract.DatasetBean;
@@ -73,7 +74,7 @@ public class ViewSingleJobServlet extends SecureController {
         }
         // << tbh 09/03/2009 #4143
         scheduler = getScheduler();
-        Trigger trigger = scheduler.getTrigger(triggerName, groupName);
+        Trigger trigger = scheduler.getTrigger(TriggerKey.triggerKey(triggerName, groupName));
 
         // trigger bean is a wrapper for the trigger, to serve as a link btw
         // quartz classes and oc classes
@@ -81,7 +82,7 @@ public class ViewSingleJobServlet extends SecureController {
 
         if (trigger == null) {
             groupName = XsltTriggerService.TRIGGER_GROUP_NAME;
-            trigger = scheduler.getTrigger(triggerName.trim(), groupName);
+            trigger = scheduler.getTrigger(TriggerKey.triggerKey(triggerName.trim(), groupName));
         }
         // << tbh 09/03/2009 #4143
         // above is a hack, if we add more trigger groups this will have
@@ -93,16 +94,16 @@ public class ViewSingleJobServlet extends SecureController {
         AuditEventDAO auditEventDAO = new AuditEventDAO(sm.getDataSource());
 
         try {
-            triggerBean.setFullName(trigger.getName());
+            triggerBean.setFullName(trigger.getKey().getName());
             triggerBean.setPreviousDate(trigger.getPreviousFireTime());
             triggerBean.setNextDate(trigger.getNextFireTime());
             // >> set active here, tbh 10/08/2009
-            if (scheduler.getTriggerState(triggerName, groupName) == Trigger.STATE_PAUSED) {
+            if (scheduler.getTriggerState(TriggerKey.triggerKey(triggerName, groupName)) == Trigger.TriggerState.PAUSED) {
                 triggerBean.setActive(false);
-                logger.debug("setting active to false for trigger: " + trigger.getName());
+                logger.debug("setting active to false for trigger: " + trigger.getKey().getName());
             } else {
                 triggerBean.setActive(true);
-                logger.debug("setting active to TRUE for trigger: " + trigger.getName());
+                logger.debug("setting active to TRUE for trigger: " + trigger.getKey().getName());
             }
             // <<
             if (trigger.getDescription() != null) {
@@ -137,7 +138,7 @@ public class ViewSingleJobServlet extends SecureController {
 
                 triggerBean.setUserAccount(userAccount);
 
-                ArrayList<AuditEventBean> triggerLogs = auditEventDAO.findAllByAuditTable(trigger.getName());
+                ArrayList<AuditEventBean> triggerLogs = auditEventDAO.findAllByAuditTable(trigger.getKey().getName());
 
                 // set the table for the audit event beans here
 

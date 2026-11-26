@@ -7,6 +7,7 @@ import org.akaza.openclinica.bean.extract.ExtractPropertyBean;
 import org.akaza.openclinica.bean.login.UserAccountBean;
 import org.quartz.JobDataMap;
 import org.quartz.SimpleTrigger;
+import org.quartz.impl.triggers.SimpleTriggerImpl;
 
 public class XsltTriggerService {
     public XsltTriggerService() {
@@ -42,19 +43,13 @@ public class XsltTriggerService {
     public static final String POST_PROC_EXPORT_NAME="postProcExportName";
     public static final String COUNT="count";
 
-    public SimpleTrigger generateXsltTrigger(String xslFile, String xmlFile, String endFilePath,
+    public SimpleTriggerImpl generateXsltTrigger(String xslFile, String xmlFile, String endFilePath,
             String endFile, int datasetId, ExtractPropertyBean epBean, UserAccountBean userAccountBean, String locale,int cnt, String xsltPath, String triggerGroupName) {
         Date startDateTime = new Date(System.currentTimeMillis());
         String jobName =  datasetId+ "_"+epBean.getExportFileName()[0];
         if(triggerGroupName!=null)
             TRIGGER_GROUP_NAME = triggerGroupName;
 
-        SimpleTrigger trigger = new SimpleTrigger(jobName, triggerGroupName);
-
-        trigger.setStartTime(startDateTime);
-        trigger.setName(jobName);// + datasetId);
-        trigger.setGroup(triggerGroupName);// + datasetId);
-        trigger.setMisfireInstruction(SimpleTrigger.MISFIRE_INSTRUCTION_FIRE_NOW);
         // set job data map
         JobDataMap jobDataMap = new JobDataMap();
 
@@ -84,8 +79,10 @@ public class XsltTriggerService {
         // jobDataMap.put(ExampleSpringJob.LOCALE, locale);
         jobDataMap.put(EP_BEAN, epBean);
 
+        SimpleTriggerImpl trigger = new SimpleTriggerImpl(jobName, triggerGroupName);
+        trigger.setStartTime(startDateTime);
+        trigger.setMisfireInstruction(SimpleTrigger.MISFIRE_INSTRUCTION_FIRE_NOW);
         trigger.setJobDataMap(jobDataMap);
-        trigger.setVolatility(false);
 
         return trigger;
     }

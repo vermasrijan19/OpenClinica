@@ -6,11 +6,11 @@
     xmlns:security="http://www.springframework.org/schema/security"
     xmlns:oauth="http://www.springframework.org/schema/security/oauth2"
     xsi:schemaLocation="http://www.springframework.org/schema/beans
-                           http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
                            http://www.springframework.org/schema/util
-                           http://www.springframework.org/schema/util/spring-util-3.2.xsd
+                           http://www.springframework.org/schema/util/spring-util.xsd
                            http://www.springframework.org/schema/security
-                           http://www.springframework.org/schema/security/spring-security-3.2.xsd
+                           http://www.springframework.org/schema/security/spring-security.xsd
                            http://www.springframework.org/schema/security/oauth2 
                            http://www.springframework.org/schema/security/spring-security-oauth2.xsd">
 
@@ -42,7 +42,11 @@
         <security:http pattern="/pages/auth/api/**" security="none"/>
         <security:http pattern="/pages/auth/api/v1/system/**" security="none"/>
 
-    <security:http access-denied-page="/accounts/denied.htm" entry-point-ref="authenticationProcessingFilterEntryPoint">
+    <security:http use-expressions="false" entry-point-ref="authenticationProcessingFilterEntryPoint">
+    <!-- Spring Security 4 defaults that would change 3.2 behaviour: no CSRF tokens in the JSPs, no extra response headers -->
+    <security:csrf disabled="true"/>
+    <security:headers disabled="true"/>
+    <security:access-denied-handler error-page="/accounts/denied.htm"/>
 
     <security:anonymous />
 
@@ -62,7 +66,7 @@
 
     <bean id="authenticationProcessingFilterEntryPoint"
           class="org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint">
-        <property name="loginFormUrl" value="/pages/login/login"/>
+        <constructor-arg value="/pages/login/login"/>
         <property name="forceHttps" value="false"/>
     </bean>
     
@@ -96,8 +100,8 @@
     </bean>
     
      <bean id="concurrencyFilter" class="org.springframework.security.web.session.ConcurrentSessionFilter">
-        <property name="sessionRegistry" ref="sessionRegistry" />
-        <property name="expiredUrl" value="/MainMenu" />
+        <constructor-arg ref="sessionRegistry" />
+        <constructor-arg value="/MainMenu" />
         <property name="logoutHandlers">
             <list>
                <ref bean="openClinicaLogoutHandler"/>
@@ -113,9 +117,21 @@
     
     
    
-    <bean id="sas" class="org.springframework.security.web.authentication.session.ConcurrentSessionControlStrategy">
-        <constructor-arg name="sessionRegistry" ref="sessionRegistry" />
-        <property name="maximumSessions" value="1" />
+    <!-- Equivalent of Spring Security 3.2 ConcurrentSessionControlStrategy (removed in 4.0):
+         one session per user (oldest expires), session fixation protection, register the new session -->
+    <bean id="sas" class="org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy">
+        <constructor-arg>
+            <list>
+                <bean class="org.springframework.security.web.authentication.session.ConcurrentSessionControlAuthenticationStrategy">
+                    <constructor-arg ref="sessionRegistry"/>
+                    <property name="maximumSessions" value="1"/>
+                </bean>
+                <bean class="org.springframework.security.web.authentication.session.SessionFixationProtectionStrategy"/>
+                <bean class="org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy">
+                    <constructor-arg ref="sessionRegistry"/>
+                </bean>
+            </list>
+        </constructor-arg>
     </bean>
 
     

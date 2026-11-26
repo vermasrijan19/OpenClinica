@@ -55,4 +55,8 @@ public class UserPermissionInterceptor implements EndpointInterceptor {
         return true;
     }
 
+
+    /** Added to EndpointInterceptor in Spring-WS 2.0; nothing to clean up. */
+    public void afterCompletion(MessageContext messageContext, Object endpoint, Exception ex) throws Exception {
+    }
 }

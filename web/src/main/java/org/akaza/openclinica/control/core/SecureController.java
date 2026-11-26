@@ -8,6 +8,8 @@
 
 package org.akaza.openclinica.control.core;
 
+import org.quartz.JobKey;
+import org.quartz.TriggerKey;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -289,15 +291,15 @@ public abstract class SecureController extends HttpServlet implements SingleThre
         Integer datasetId = (Integer) request.getSession().getAttribute("datasetId");
         try {
             if (jobName != null && groupName != null) {
-                int state = getScheduler(request).getTriggerState(jobName, groupName);
-                org.quartz.JobDetail details = getScheduler(request).getJobDetail(jobName, groupName);
+                Trigger.TriggerState state = getScheduler(request).getTriggerState(TriggerKey.triggerKey(jobName, groupName));
+                org.quartz.JobDetail details = getScheduler(request).getJobDetail(JobKey.jobKey(jobName, groupName));
                 List contexts = getScheduler(request).getCurrentlyExecutingJobs();
                 // will we get the above, even if its completed running?
                 // ProcessingResultType message = null;
                 // for (int i = 0; i < contexts.size(); i++) {
                 // org.quartz.JobExecutionContext context = (org.quartz.JobExecutionContext) contexts.get(i);
-                // if (context.getJobDetail().getName().equals(jobName) &&
-                // context.getJobDetail().getGroup().equals(groupName)) {
+                // if (context.getJobDetail().getKey().getName().equals(jobName) &&
+                // context.getJobDetail().getKey().getGroup().equals(groupName)) {
                 // message = (ProcessingResultType) context.getResult();
                 // System.out.println("found message " + message.getDescription());
                 // }
@@ -305,7 +307,7 @@ public abstract class SecureController extends HttpServlet implements SingleThre
                 // ProcessingResultType message = (ProcessingResultType) details.getResult();
                 org.quartz.JobDataMap dataMap = details.getJobDataMap();
                 String failMessage = dataMap.getString("failMessage");
-                if (state == Trigger.STATE_NONE || state== Trigger.STATE_COMPLETE) {
+                if (state == Trigger.TriggerState.NONE || state== Trigger.TriggerState.COMPLETE) {
                     // add the message here that your export is done
                     // TODO make absolute paths in the message, for example a link from /pages/* would break
                     // TODO i18n

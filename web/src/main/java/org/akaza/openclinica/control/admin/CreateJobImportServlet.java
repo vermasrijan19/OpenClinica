@@ -1,5 +1,7 @@
 package org.akaza.openclinica.control.admin;
 
+import org.akaza.openclinica.job.QuartzNames;
+import org.quartz.impl.triggers.SimpleTriggerImpl;
 import org.akaza.openclinica.bean.managestudy.StudyBean;
 import org.akaza.openclinica.control.SpringServletAccess;
 import org.akaza.openclinica.control.core.SecureController;
@@ -16,7 +18,7 @@ import org.akaza.openclinica.web.job.TriggerService;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
 import org.quartz.impl.StdScheduler;
-import org.springframework.scheduling.quartz.JobDetailBean;
+import org.quartz.impl.JobDetailImpl;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -129,7 +131,7 @@ public class CreateJobImportServlet extends SecureController {
             forwardPage(Page.CREATE_JOB_IMPORT);
         } else if ("confirmall".equalsIgnoreCase(action)) {
             // collect form information
-            HashMap errors = triggerService.validateImportJobForm(fp, request, scheduler.getTriggerNames(IMPORT_TRIGGER));
+            HashMap errors = triggerService.validateImportJobForm(fp, request, QuartzNames.triggerNames(scheduler, IMPORT_TRIGGER));
 
             if (!errors.isEmpty()) {
                 // set errors to request
@@ -145,21 +147,20 @@ public class CreateJobImportServlet extends SecureController {
                 StudyBean studyBean = (StudyBean) studyDAO.findByPK(studyId);
                 SimpleTrigger trigger = triggerService.generateImportTrigger(fp, sm.getUserBean(), studyBean, LocaleResolver.getLocale(request).getLanguage());
 
-                // SimpleTrigger trigger = new SimpleTrigger();
-                JobDetailBean jobDetailBean = new JobDetailBean();
+                // SimpleTrigger trigger = new SimpleTriggerImpl();
+                JobDetailImpl jobDetailBean = new JobDetailImpl();
                 jobDetailBean.setGroup(IMPORT_TRIGGER);
-                jobDetailBean.setName(trigger.getName());
+                jobDetailBean.setName(trigger.getKey().getName());
                 jobDetailBean.setJobClass(org.akaza.openclinica.web.job.ImportStatefulJob.class);
                 jobDetailBean.setJobDataMap(trigger.getJobDataMap());
                 jobDetailBean.setDurability(true); // need durability?
-                jobDetailBean.setVolatility(false);
 
                 // set to the scheduler
                 try {
                     Date dateStart = scheduler.scheduleJob(jobDetailBean, trigger);
                     logger.debug("== found job date: " + dateStart.toString());
                     // set a success message here
-                    addPageMessage("You have successfully created a new job: " + trigger.getName() + " which is now set to run at the time you specified.");
+                    addPageMessage("You have successfully created a new job: " + trigger.getKey().getName() + " which is now set to run at the time you specified.");
                     forwardPage(Page.VIEW_IMPORT_JOB_SERVLET);
                 } catch (SchedulerException se) {
                     se.printStackTrace();
