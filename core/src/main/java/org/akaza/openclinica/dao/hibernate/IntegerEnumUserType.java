@@ -1,16 +1,17 @@
 package org.akaza.openclinica.dao.hibernate;
 
 import org.akaza.openclinica.bean.rule.expression.Context;
-import org.hibernate.Hibernate;
 import org.hibernate.HibernateException;
 import org.hibernate.usertype.EnhancedUserType;
 import org.hibernate.usertype.ParameterizedType;
-import org.hibernate.util.ReflectHelper;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.internal.util.ReflectHelper;
 
 import java.io.Serializable;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.Properties;
 
 /**
@@ -36,7 +37,7 @@ public class IntegerEnumUserType implements EnhancedUserType, ParameterizedType 
     }
 
     public int[] sqlTypes() {
-        return new int[] { Hibernate.INTEGER.sqlType() };
+        return new int[] { Types.INTEGER };
     }
 
     public boolean isMutable() {
@@ -79,15 +80,15 @@ public class IntegerEnumUserType implements EnhancedUserType, ParameterizedType 
         return ((Context) value).getCode().toString();
     }
 
-    public Object nullSafeGet(ResultSet rs, String[] names, Object owner) throws SQLException {
+    public Object nullSafeGet(ResultSet rs, String[] names, SharedSessionContractImplementor session, Object owner) throws SQLException {
         String name = rs.getString(names[0]);
         // return rs.wasNull() ? null : Enum.valueOf(enumClass, name);
         return rs.wasNull() ? null : Context.getByCode(Integer.parseInt(name));
     }
 
-    public void nullSafeSet(PreparedStatement st, Object value, int index) throws SQLException {
+    public void nullSafeSet(PreparedStatement st, Object value, int index, SharedSessionContractImplementor session) throws SQLException {
         if (value == null) {
-            st.setNull(index, Hibernate.INTEGER.sqlType());
+            st.setNull(index, Types.INTEGER);
         } else {
             // st.setString(index, ((Enum) value).name());
             st.setInt(index, ((Context) value).getCode());

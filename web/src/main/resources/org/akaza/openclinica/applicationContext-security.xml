@@ -12,7 +12,7 @@
                            http://www.springframework.org/schema/security
                            http://www.springframework.org/schema/security/spring-security.xsd
                            http://www.springframework.org/schema/security/oauth2 
-                           http://www.springframework.org/schema/security/spring-security-oauth2.xsd">
+                           https://www.springframework.org/schema/security/spring-security-oauth2.xsd">
 
 
         <security:http pattern="/pages/login/login" security="none"/>

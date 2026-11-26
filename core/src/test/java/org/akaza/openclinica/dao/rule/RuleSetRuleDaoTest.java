@@ -89,10 +89,10 @@ public class RuleSetRuleDaoTest extends HibernateOcDbTestCase {
     }
     public void tearDown(){
         try {
-           ruleSetDao.getSessionFactory().getCurrentSession().close();
-            ruleDao.getSessionFactory().getCurrentSession().close();
+           ruleSetDao.getSessionFactory().getCurrentSession().clear();
+            ruleDao.getSessionFactory().getCurrentSession().clear();
         //   ruleDao.getSessionFactory().getCurrentSession().flush();
-            ruleSetRuleDao.getSessionFactory().getCurrentSession().close();
+            ruleSetRuleDao.getSessionFactory().getCurrentSession().clear();
         } catch (HibernateException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

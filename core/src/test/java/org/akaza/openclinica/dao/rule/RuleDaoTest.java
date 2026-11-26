@@ -126,7 +126,7 @@ public class RuleDaoTest extends HibernateOcDbTestCase {
     }
     public void tearDown(){
         try {
-            ruleDao.getSessionFactory().getCurrentSession().close();
+            ruleDao.getSessionFactory().getCurrentSession().clear();
           
         } catch (HibernateException e) {
             // TODO Auto-generated catch block

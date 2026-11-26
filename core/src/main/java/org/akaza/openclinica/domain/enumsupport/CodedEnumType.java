@@ -1,10 +1,10 @@
 package org.akaza.openclinica.domain.enumsupport;
 
-import org.hibernate.Hibernate;
 import org.hibernate.HibernateException;
 import org.hibernate.usertype.EnhancedUserType;
 import org.hibernate.usertype.ParameterizedType;
-import org.hibernate.util.ReflectHelper;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.internal.util.ReflectHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +14,7 @@ import java.lang.reflect.Method;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.Properties;
 
 /**
@@ -57,7 +58,7 @@ public class CodedEnumType implements EnhancedUserType, ParameterizedType {
      * 
      */
     public int[] sqlTypes() {
-        return new int[] { Hibernate.INTEGER.sqlType() };
+        return new int[] { Types.INTEGER };
     }
 
     /* 
@@ -128,7 +129,7 @@ public class CodedEnumType implements EnhancedUserType, ParameterizedType {
      * if you need it for the conversion.
      * @see org.hibernate.usertype.UserType#nullSafeGet(java.sql.ResultSet, java.lang.String[], java.lang.Object)
      */
-    public Object nullSafeGet(ResultSet rs, String[] names, Object owner) throws SQLException {
+    public Object nullSafeGet(ResultSet rs, String[] names, SharedSessionContractImplementor session, Object owner) throws SQLException {
         String key = rs.getString(names[0]);
         return rs.wasNull() ? null : getByCode(key);
     }
@@ -137,9 +138,9 @@ public class CodedEnumType implements EnhancedUserType, ParameterizedType {
      * This method writes the property value to the JDBC Prepared-Statement.
      * @see org.hibernate.usertype.UserType#nullSafeSet(java.sql.PreparedStatement, java.lang.Object, int)
      */
-    public void nullSafeSet(PreparedStatement st, Object value, int index) throws SQLException {
+    public void nullSafeSet(PreparedStatement st, Object value, int index, SharedSessionContractImplementor session) throws SQLException {
         if (value == null) {
-            st.setNull(index, Hibernate.INTEGER.sqlType());
+            st.setNull(index, Types.INTEGER);
         } else {
             Integer code = getCode(value);
             logger.debug("Binding '{}' to parameter: {}", code, index);

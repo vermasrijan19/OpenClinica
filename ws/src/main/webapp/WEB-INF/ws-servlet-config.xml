@@ -217,6 +217,11 @@
         <list>
           <bean class="org.springframework.security.authentication.dao.DaoAuthenticationProvider">
               <property name="userDetailsService" ref="ocUserDetailsService"/>
+              <!-- SOAP username tokens carry the stored hash itself; compare as-is (Security 4 default,
+                   Security 5 would otherwise expect {id}-prefixed hashes) -->
+              <property name="passwordEncoder">
+                  <bean class="org.springframework.security.crypto.password.NoOpPasswordEncoder" factory-method="getInstance"/>
+              </property>
           </bean>
         </list>
       </constructor-arg>

@@ -62,9 +62,6 @@
     </bean>
                  
 	
-    <bean id="castorMarshaller" class="org.springframework.oxm.castor.CastorMarshaller" >
-        <property name="mappingLocation" value="classpath:properties/mappingMarshaller.xml" />
-    </bean>
     
     <oxm:jaxb2-marshaller id="jaxbMarshaller" context-path="org.cdisc.ns.odm.v130:org.cdisc.ns.odm.v130_api:org.openclinica.ns.odm_ext_v130.v31_api:org.openclinica.ns.odm_ext_v130.v31:org.openclinica.ns.rules.v31:org.openclinica.ns.response.v31:org.openclinica.ns.rules_test.v31"/>
     
@@ -80,9 +77,13 @@
         <property name="supportedMediaTypes" value="application/json"/>
     </bean>
  
-    <bean class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping"/>
+    <!-- Spring 5 replacements for DefaultAnnotationHandlerMapping / AnnotationMethodHandlerAdapter.
+         Suffix pattern matching was on by default in the old mapping (off by default since 5.3). -->
+    <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping">
+        <property name="useSuffixPatternMatch" value="true"/>
+    </bean>
     
-    <bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter">
+    <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
         <property name="messageConverters">
             <util:list id="beanList">
                 <ref bean="marshallingHttpMessageConverter"/>

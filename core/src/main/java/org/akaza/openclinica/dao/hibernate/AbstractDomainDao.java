@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import org.akaza.openclinica.domain.DomainObject;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.springframework.orm.hibernate3.HibernateTemplate;
+import org.springframework.orm.hibernate5.HibernateTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 
@@ -66,9 +66,9 @@ public abstract class AbstractDomainDao<T extends DomainObject> {
 
     @Transactional
     public T findByColumnName(Object id,String key) {
-    String query = "from " + getDomainClassName() + " do where do."+key +"= ?";
+    String query = "from " + getDomainClassName() + " do where do."+key +"= :value";
     org.hibernate.Query q = getCurrentSession().createQuery(query);
-    q.setParameter(0, id);
+    q.setParameter("value", id);
     return (T) q.uniqueResult();
     } 
     

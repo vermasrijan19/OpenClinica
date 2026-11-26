@@ -49,8 +49,10 @@
        <bean class="org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping"/>
 
       <!-- Map the interceptor implementation to all annotated Controllers -->
+       <!-- Spring 5 replacement for DefaultAnnotationHandlerMapping (suffix pattern matching kept on) -->
        <bean class=
-               "org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping">
+               "org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping">
+           <property name="useSuffixPatternMatch" value="true"/>
            <property name="interceptors">
                <list>
                    <ref bean="setUpUserInterceptor"/>

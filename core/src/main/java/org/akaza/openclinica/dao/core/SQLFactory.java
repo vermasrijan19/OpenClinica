@@ -149,19 +149,24 @@ public class SQLFactory {
         // key is the public static final sting used above; value is the actual
         // filename
         HashMap fileList = new HashMap();
-        CacheManager cacheManager = new CacheManager();
+        // Ehcache 2.5+ allows only one unnamed CacheManager per JVM, so use the shared singleton:
+        // created from OpenClinica's ehcache.xml when it is available, else from the default configuration.
+        CacheManager cacheManager = resourceLoader == null ? CacheManager.create() : null;
         
         
        
       
         try {
-            if(resourceLoader!=null && cacheManager!=null)
-            cacheManager = cacheManager.create(resourceLoader.getResource("classpath:org/akaza/openclinica/ehcache.xml").getInputStream());
+            if(resourceLoader!=null)
+            cacheManager = CacheManager.create(resourceLoader.getResource("classpath:org/akaza/openclinica/ehcache.xml").getInputStream());
         } catch (CacheException e) {
           
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+        if (cacheManager == null) {
+            cacheManager = CacheManager.create();
         }
         EhCacheWrapper ehCache = new EhCacheWrapper("com.akaza.openclinica.dao.core.DAOCache",cacheManager);
         

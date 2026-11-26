@@ -32,12 +32,13 @@ public class UsageStatsServiceDAO extends AbstractDomainDao<LogUsageStatsBean> {
         // logger.debug("UsageStatsServiceDAO -> findLatestUsageStatParamValue");
 
         String query =
- "from " + getDomainClassName() + " usageStatParams where param_key = :param_key order by update_timestamp desc limit 1;";
+ "from " + getDomainClassName() + " usageStatParams where param_key = :param_key order by update_timestamp desc";
 
         List<LogUsageStatsBean> logUsageStatsBeanLst = new ArrayList<LogUsageStatsBean>();
         LogUsageStatsBean logUsageStatsBeanRet = new LogUsageStatsBean();
         org.hibernate.Query q = getCurrentSession().createQuery(query);
         q.setString("param_key", param_key);
+        q.setMaxResults(1); // HQL has no LIMIT (Hibernate 3 passed it through, Hibernate 5 rejects it)
         logUsageStatsBeanLst = q.list();
         if ((null != logUsageStatsBeanLst) && (logUsageStatsBeanLst.size() != 0)) {
             logUsageStatsBeanRet = logUsageStatsBeanLst.get(0);

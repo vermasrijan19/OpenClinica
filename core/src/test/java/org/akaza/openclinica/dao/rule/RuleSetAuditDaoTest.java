@@ -90,8 +90,8 @@ public class RuleSetAuditDaoTest extends HibernateOcDbTestCase {
     }
     public void tearDown(){
         try {
-            ruleSetAuditDao.getSessionFactory().getCurrentSession().close();
-            ruleSetAuditDao.getSessionFactory().getCurrentSession().close();
+            ruleSetAuditDao.getSessionFactory().getCurrentSession().clear();
+            ruleSetAuditDao.getSessionFactory().getCurrentSession().clear();
         } catch (HibernateException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

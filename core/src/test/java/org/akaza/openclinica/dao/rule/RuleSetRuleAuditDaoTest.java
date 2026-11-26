@@ -97,9 +97,9 @@ private static RuleSetRuleDao ruleSetRuleDao;
     }*/
     public void tearDown(){
         try {
-            ruleSetRuleDao.getSessionFactory().getCurrentSession().close();
-            ruleSetRuleAuditDao.getSessionFactory().getCurrentSession().close();
-            ruleSetDao.getSessionFactory().getCurrentSession().close();
+            ruleSetRuleDao.getSessionFactory().getCurrentSession().clear();
+            ruleSetRuleAuditDao.getSessionFactory().getCurrentSession().clear();
+            ruleSetDao.getSessionFactory().getCurrentSession().clear();
             ruleSetRuleDao.getSessionFactory().getCurrentSession().setCacheMode(CacheMode.REFRESH);
         } catch (HibernateException e) {
             // TODO Auto-generated catch block

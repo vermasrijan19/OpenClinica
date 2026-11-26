@@ -30,3 +30,5 @@ nb-configuration.xml
 
 # Logback output from tests run without catalina.home
 */catalina.home_IS_UNDEFINED/
+*/log.dir_IS_UNDEFINED*
+log.dir_IS_UNDEFINED*

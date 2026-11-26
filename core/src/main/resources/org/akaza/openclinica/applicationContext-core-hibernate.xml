@@ -15,7 +15,7 @@
 
 
     <!-- A Hibernate SessionFactory for mapping Domain Objects from object to relation tables -->
-    <bean id="sessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
         <property name="dataSource" ref="dataSource"/>
         <property name="mappingLocations">
             <list>
@@ -135,21 +135,26 @@
                 <prop key="hibernate.format_sql">true</prop>
                 <prop key="hibernate.dialect">s[hibernate.dialect]</prop>
                 <prop key="hibernate.generate_statistics">true</prop>
-                <prop key="hibernate.cache.region.factory_class">net.sf.ehcache.hibernate.SingletonEhCacheRegionFactory</prop>
+                <prop key="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.SingletonEhCacheRegionFactory</prop>
                 <prop key="hibernate.cache.use_query_cache">true</prop>
                 <prop key="hibernate.cache.use_second_level_cache">true</prop>
-                <prop key="hibernate.cache.provider_configuration_file_resource_path">/ehcache.xml</prop>
+                <!-- keep Hibernate 3 id generation: "native"/sequence generators fetch one value per insert (no pooled optimizer) -->
+                <prop key="hibernate.id.new_generator_mappings">false</prop>
                 <!-- Uncommenting the following line allows better logging of Hibernate errors for debugging purposes. Must be commented out for production use. -->
                 <!-- prop key="hibernate.jdbc.batch_size">0</prop -->
             </props>
         </property>
-        <property name="namingStrategy">
-            <bean class="org.hibernate.cfg.ImprovedNamingStrategy"/>
+        <!-- Hibernate 3 ImprovedNamingStrategy equivalent (NamingStrategy was removed in Hibernate 5) -->
+        <property name="implicitNamingStrategy">
+            <bean class="org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl"/>
+        </property>
+        <property name="physicalNamingStrategy">
+            <bean class="org.akaza.openclinica.dao.hibernate.ImprovedPhysicalNamingStrategy"/>
         </property>
     </bean>
 
   <!-- A transaction manager for working with Hibernate SessionFactories -->
-  <bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+  <bean id="transactionManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager">
     <property name="sessionFactory" ref="sessionFactory"/>
   </bean>
   
@@ -158,7 +163,7 @@
   </bean>
   
 
-  <bean id="hibernateTemplate" class="org.springframework.orm.hibernate3.HibernateTemplate">
+  <bean id="hibernateTemplate" class="org.springframework.orm.hibernate5.HibernateTemplate">
     <property name="sessionFactory" ref="sessionFactory"/>
   </bean>
 
