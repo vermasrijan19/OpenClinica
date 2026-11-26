@@ -3,9 +3,7 @@ package org.akaza.openclinica.web.pform;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.StringWriter;
 import java.net.FileNameMap;
 import java.net.URLConnection;
@@ -22,19 +20,6 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
-import javax.ws.rs.GET;
-import javax.ws.rs.HEAD;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
-import javax.ws.rs.core.StreamingOutput;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
@@ -79,17 +64,24 @@ import org.exolab.castor.xml.Marshaller;
 import org.exolab.castor.xml.XMLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 
-@Path("/openrosa")
-@Component
+@Controller
+@RequestMapping("/openrosa")
 public class OpenRosaServices {
 
     public static final String INPUT_USER_SOURCE = "userSource";
@@ -153,11 +145,28 @@ public class OpenRosaServices {
      *                    </xforms>
      */
 
-    @GET
-    @Path("/{studyOID}/formList")
-    @Produces(MediaType.TEXT_XML)
-    public String getFormList(@Context HttpServletRequest request, @Context HttpServletResponse response, @PathParam("studyOID") String studyOID,
-            @QueryParam("formID") String crfOID, @RequestHeader("Authorization") String authorization, @Context ServletContext context) throws Exception {
+    private ResponseEntity<String> toStringResponse(String body, String contentType) {
+        MediaType mediaType = MediaType.parseMediaType(contentType);
+        if (body == null) {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).contentType(mediaType).build();
+        }
+        return ResponseEntity.ok().contentType(mediaType).body(body);
+    }
+
+    @RequestMapping(value = "/{studyOID}/formList", method = RequestMethod.GET, produces = "text/xml;charset=UTF-8")
+    public ResponseEntity<String> getFormListSpring(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            @PathVariable("studyOID") String studyOID,
+            @RequestParam(value = "formID", required = false) String crfOID,
+            @RequestHeader(value = "Authorization", required = false) String authorization) throws Exception {
+        return toStringResponse(
+                getFormList(request, response, studyOID, crfOID, authorization, request.getServletContext()),
+                "text/xml;charset=UTF-8");
+    }
+
+    public String getFormList(HttpServletRequest request, HttpServletResponse response, String studyOID,
+            String crfOID, String authorization, ServletContext context) throws Exception {
         if (!mayProceedPreview(studyOID))
             return null;
 
@@ -242,11 +251,20 @@ public class OpenRosaServices {
      * @apiDescription Gets additional information on a particular Form, including links to associated media.
      */
 
-    @GET
-    @Path("/{studyOID}/manifest")
-    @Produces(MediaType.TEXT_XML)
-    public String getManifest(@Context HttpServletRequest request, @Context HttpServletResponse response, @PathParam("studyOID") String studyOID,
-            @QueryParam("formId") String crfOID, @RequestHeader("Authorization") String authorization, @Context ServletContext context) throws Exception {
+    @RequestMapping(value = "/{studyOID}/manifest", method = RequestMethod.GET, produces = "text/xml;charset=UTF-8")
+    public ResponseEntity<String> getManifestSpring(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            @PathVariable("studyOID") String studyOID,
+            @RequestParam(value = "formId", required = false) String crfOID,
+            @RequestHeader(value = "Authorization", required = false) String authorization) throws Exception {
+        return toStringResponse(
+                getManifest(request, response, studyOID, crfOID, authorization, request.getServletContext()),
+                "text/xml;charset=UTF-8");
+    }
+
+    public String getManifest(HttpServletRequest request, HttpServletResponse response, String studyOID,
+            String crfOID, String authorization, ServletContext context) throws Exception {
         if (!mayProceedPreview(studyOID))
             return null;
 
@@ -309,11 +327,20 @@ public class OpenRosaServices {
      * @apiDescription Downloads the contents of a form
      */
 
-    @GET
-    @Path("/{studyOID}/formXml")
-    @Produces(MediaType.APPLICATION_XML)
-    public String getFormXml(@Context HttpServletRequest request, @Context HttpServletResponse response, @PathParam("studyOID") String studyOID,
-            @QueryParam("formID") String crfOID, @RequestHeader("Authorization") String authorization) throws Exception {
+    @RequestMapping(value = "/{studyOID}/formXml", method = RequestMethod.GET, produces = "application/xml;charset=UTF-8")
+    public ResponseEntity<String> getFormXmlSpring(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            @PathVariable("studyOID") String studyOID,
+            @RequestParam(value = "formID", required = false) String crfOID,
+            @RequestHeader(value = "Authorization", required = false) String authorization) throws Exception {
+        return toStringResponse(
+                getFormXml(request, response, studyOID, crfOID, authorization),
+                "application/xml;charset=UTF-8");
+    }
+
+    public String getFormXml(HttpServletRequest request, HttpServletResponse response, String studyOID,
+            String crfOID, String authorization) throws Exception {
         if (!mayProceedPreview(studyOID))
             return null;
 
@@ -360,27 +387,31 @@ public class OpenRosaServices {
      * @apiDescription Downloads media associated with a form, including images and video.
      */
 
-    @GET
-    @Path("/{studyOID}/downloadMedia")
-    public Response getMediaFile(@Context HttpServletRequest request, @Context HttpServletResponse response, @PathParam("studyOID") String studyOID,
-            @QueryParam("crfVersionMediaId") String crfVersionMediaId, @RequestHeader("Authorization") String authorization, @Context ServletContext context)
+    @RequestMapping(value = "/{studyOID}/downloadMedia", method = RequestMethod.GET)
+    public ResponseEntity<Void> getMediaFile(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            @PathVariable("studyOID") String studyOID,
+            @RequestParam(value = "crfVersionMediaId", required = false) String crfVersionMediaId,
+            @RequestHeader(value = "Authorization", required = false) String authorization)
             throws Exception {
         if (!mayProceedPreview(studyOID))
-            return null;
+            return ResponseEntity.noContent().build();
 
-        CrfVersionMediaDao mediaDao = (CrfVersionMediaDao) SpringServletAccess.getApplicationContext(context).getBean("crfVersionMediaDao");
+        CrfVersionMediaDao mediaDao = (CrfVersionMediaDao) SpringServletAccess.getApplicationContext(request.getServletContext()).getBean("crfVersionMediaDao");
         CrfVersionMedia media = mediaDao.findById(Integer.valueOf(crfVersionMediaId));
 
         File image = new File(media.getPath() + media.getName());
-        FileInputStream fis = new FileInputStream(image);
-        StreamingOutput stream = new MediaStreamingOutput(fis);
-        ResponseBuilder builder = Response.ok(stream);
-        
-        // Set content type, if known
         FileNameMap fileNameMap = URLConnection.getFileNameMap();
         String type = fileNameMap.getContentTypeFor(media.getPath() + media.getName());
-        if (type != null && !type.isEmpty()) builder = builder.header("Content-Type", type);
-        return builder.build();
+        if (type != null && !type.isEmpty()) {
+            response.setHeader("Content-Type", type);
+        }
+        try (FileInputStream fis = new FileInputStream(image)) {
+            IOUtils.copy(fis, response.getOutputStream());
+            response.flushBuffer();
+        }
+        return new ResponseEntity<Void>(HttpStatus.OK);
     }
 
     /**
@@ -394,28 +425,28 @@ public class OpenRosaServices {
      * @apiDescription Submits the data from a completed form.
      */
 
-    @POST
-    @Path("/{studyOID}/submission")
-    @Produces(MediaType.APPLICATION_XML)
-    public Response doSubmission(@Context HttpServletRequest request, @Context HttpServletResponse response, @Context ServletContext servletContext,
-            @PathParam("studyOID") String studyOID, @QueryParam(FORM_CONTEXT) String context) {
-
-        Response.ResponseBuilder builder = Response.noContent();
+    @RequestMapping(value = "/{studyOID}/submission", method = RequestMethod.POST, produces = "application/xml;charset=UTF-8")
+    public ResponseEntity<String> doSubmission(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            @PathVariable("studyOID") String studyOID,
+            @RequestParam(value = FORM_CONTEXT, required = false) String context) {
 
         ResponseEntity<String> responseEntity = openRosaSubmissionController.doSubmission(request, response, studyOID, context);
         if (responseEntity == null) {
             LOGGER.debug("Null response from OpenRosaSubmissionController.");
-            return builder.status(javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR).build();
+            return new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
         } else if (responseEntity.getStatusCode().equals(org.springframework.http.HttpStatus.CREATED)) {
             LOGGER.debug("Successful OpenRosa submission");
-            builder.entity("<OpenRosaResponse xmlns=\"http://openrosa.org/http/response\">" + "<message>success</message>" + "</OpenRosaResponse>");
-            return builder.status(javax.ws.rs.core.Response.Status.CREATED).build();
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .contentType(MediaType.parseMediaType("application/xml;charset=UTF-8"))
+                    .body("<OpenRosaResponse xmlns=\"http://openrosa.org/http/response\">" + "<message>success</message>" + "</OpenRosaResponse>");
         } else if (responseEntity.getStatusCode().equals(org.springframework.http.HttpStatus.NOT_ACCEPTABLE)) {
             LOGGER.debug("Failed OpenRosa submission");
-            return builder.status(javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE).build();
+            return new ResponseEntity<String>(HttpStatus.NOT_ACCEPTABLE);
         } else {
             LOGGER.debug("Failed OpenRosa submission with unhandled error");
-            return builder.status(javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR).build();
+            return new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -429,12 +460,9 @@ public class OpenRosaServices {
      * @apiDescription Returns the HTTP headers for a form submission request.
      */
 
-    @HEAD
-    @Path("/{studyOID}/submission")
-    @Produces(MediaType.APPLICATION_XML)
-    public Response doSubmissionHead(@PathParam("studyOID") String studyOID) {
+    @RequestMapping(value = "/{studyOID}/submission", method = RequestMethod.HEAD, produces = "application/xml;charset=UTF-8")
+    public ResponseEntity<Void> doSubmissionHead(@PathVariable("studyOID") String studyOID) {
 
-        Response.ResponseBuilder builder = Response.noContent();
         String maxSubmissionSize = CoreResources.getField("pformMaxSubmissionSize");
         int maxSubmissionSizeInt = -1;
 
@@ -451,23 +479,32 @@ public class OpenRosaServices {
         cal.setTime(currentDate);
         SimpleDateFormat format = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss zz");
         format.setCalendar(cal);
-        builder = builder.header("Date", format.format(currentDate));
-        builder = builder.header("X-OpenRosa-Version", "1.0");
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Date", format.format(currentDate));
+        headers.set("X-OpenRosa-Version", "1.0");
 
         if (maxSubmissionSizeInt < 1) {
             logger.error("pformMaxSubmissionSize does not contain an integer value greater than 0.");
-            return builder.status(javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR).build();
+            return new ResponseEntity<Void>(headers, HttpStatus.INTERNAL_SERVER_ERROR);
         } else {
-            builder = builder.header("X-OpenRosa-Accept-Content-Length", maxSubmissionSizeInt);
-            return builder.status(javax.ws.rs.core.Response.Status.ACCEPTED).build();
+            headers.set("X-OpenRosa-Accept-Content-Length", String.valueOf(maxSubmissionSizeInt));
+            return new ResponseEntity<Void>(headers, HttpStatus.ACCEPTED);
         }
     }
 
-    @GET
-    @Path("/{studyOID}/getSchedule")
-    @Produces(MediaType.APPLICATION_XML)
-    public String getSchedule(@Context HttpServletRequest request, @Context HttpServletResponse response, @Context ServletContext context,
-            @PathParam("studyOID") String studyOID, @RequestHeader("Authorization") String authorization) throws Exception {
+    @RequestMapping(value = "/{studyOID}/getSchedule", method = RequestMethod.GET, produces = "application/xml;charset=UTF-8")
+    public ResponseEntity<String> getScheduleSpring(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            @PathVariable("studyOID") String studyOID,
+            @RequestHeader(value = "Authorization", required = false) String authorization) throws Exception {
+        return toStringResponse(
+                getSchedule(request, response, request.getServletContext(), studyOID, authorization),
+                "application/xml;charset=UTF-8");
+    }
+
+    public String getSchedule(HttpServletRequest request, HttpServletResponse response, ServletContext context,
+            String studyOID, String authorization) throws Exception {
 
         String ssoid = request.getParameter("studySubjectOID");
         StudySubjectDAO ssdao = new StudySubjectDAO<String, ArrayList>(dataSource);
@@ -663,22 +700,5 @@ public class OpenRosaServices {
             accessPermission = true;
         }
         return accessPermission;
-    }
-
-    private class MediaStreamingOutput implements StreamingOutput {
-
-        private InputStream in = null;
-
-        public MediaStreamingOutput(InputStream in) {
-            this.in = in;
-        }
-
-        @Override
-        public void write(OutputStream out) throws IOException, WebApplicationException {
-            // TODO Auto-generated method stub
-            IOUtils.copy(in, out);
-            in.close();
-            out.close();
-        }
     }
 }

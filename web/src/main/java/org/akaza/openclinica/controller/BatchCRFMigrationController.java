@@ -18,8 +18,8 @@ import java.util.ResourceBundle;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+
+import org.springframework.http.MediaType;
 
 import org.akaza.openclinica.bean.admin.CRFBean;
 import org.akaza.openclinica.bean.core.Role;
@@ -206,8 +206,7 @@ public class BatchCRFMigrationController implements Runnable {
      *                    }
      */
 
-    @Produces(MediaType.APPLICATION_JSON)
-    @RequestMapping(value = "/auth/api/v1/forms/migrate/run", method = RequestMethod.POST)
+    @RequestMapping(value = "/auth/api/v1/forms/migrate/run", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ReportLog> runAuthMigration(@RequestBody TransferObject transferObject, HttpServletRequest request) throws Exception {
 
         ResponseEntity<HelperObject> res = runPreviewTest(transferObject, request);
@@ -233,7 +232,6 @@ public class BatchCRFMigrationController implements Runnable {
         }
     }
 
-    @Produces(MediaType.APPLICATION_JSON)
     @RequestMapping(value = "/api/v1/forms/migrate/run", method = RequestMethod.POST)
     public @ResponseBody String runMigration(HttpServletRequest request, HttpServletResponse response) throws Exception {
         TransferObject transferObject = getUIComponents(request);
@@ -303,8 +301,7 @@ public class BatchCRFMigrationController implements Runnable {
      *                    "logs": []
      *                    }
      */
-    @Produces(MediaType.APPLICATION_JSON)
-    @RequestMapping(value = "/auth/api/v1/forms/migrate/preview", method = RequestMethod.POST)
+    @RequestMapping(value = "/auth/api/v1/forms/migrate/preview", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ReportLog> runAuthPreview(@RequestBody TransferObject transferObject, HttpServletRequest request) throws Exception {
 
         ResponseEntity<HelperObject> res = runPreviewTest(transferObject, request);
@@ -313,8 +310,7 @@ public class BatchCRFMigrationController implements Runnable {
         return new ResponseEntity<ReportLog>(helperObject.getReportLog(), org.springframework.http.HttpStatus.OK);
     }
 
-    @Produces(MediaType.APPLICATION_JSON)
-    @RequestMapping(value = "/api/v1/forms/migrate/preview", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/v1/forms/migrate/preview", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody ReportLog runPreview(HttpServletRequest request, HttpServletResponse response) throws Exception {
         TransferObject transferObject = getUIComponents(request);
 

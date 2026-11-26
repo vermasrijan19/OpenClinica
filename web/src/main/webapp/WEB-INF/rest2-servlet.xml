@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="openRosaServices" class="org.akaza.openclinica.web.pform.OpenRosaServices">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="coreResources" ref="coreResources"/>
+        <property name="ruleActionPropertyDao" ref="ruleActionPropertyDao"/>
+        <property name="openRosaSubmissionController" ref="openRosaSubmissionController"/>
+    </bean>
+
+    <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping"/>
+
+    <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
+        <property name="messageConverters">
+            <list>
+                <bean class="org.springframework.http.converter.StringHttpMessageConverter">
+                    <constructor-arg value="UTF-8"/>
+                    <property name="writeAcceptCharset" value="false"/>
+                </bean>
+            </list>
+        </property>
+    </bean>
+
+</beans>

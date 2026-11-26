@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="restODMFilter" class="org.akaza.openclinica.web.filter.rest.RestODMFilter"/>
+
+    <bean id="odmMetadataRestResource" class="org.akaza.openclinica.web.restful.ODMMetadataRestResource">
+        <property name="metadataCollectorResource" ref="metadataCollectorResource"/>
+    </bean>
+
+    <bean id="odmClinicalDataRestResource" class="org.akaza.openclinica.web.restful.ODMClinicaDataResource">
+        <property name="clinicalDataCollectorResource" ref="clinicalDataCollectorResource"/>
+        <property name="metadataCollectorResource" ref="metadataCollectorResource"/>
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <bean class="org.akaza.openclinica.web.restful.RestFallbackController"/>
+
+    <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping">
+        <property name="interceptors">
+            <list>
+                <ref bean="restODMFilter"/>
+            </list>
+        </property>
+    </bean>
+
+    <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
+        <property name="messageConverters">
+            <list>
+                <bean class="org.springframework.http.converter.StringHttpMessageConverter">
+                    <constructor-arg value="UTF-8"/>
+                    <property name="writeAcceptCharset" value="false"/>
+                </bean>
+            </list>
+        </property>
+    </bean>
+
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver"/>
+
+</beans>

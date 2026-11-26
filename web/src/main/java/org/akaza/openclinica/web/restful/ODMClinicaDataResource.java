@@ -3,14 +3,6 @@ package org.akaza.openclinica.web.restful;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
 
 import net.sf.json.JSON;
 import net.sf.json.JSONObject;
@@ -26,10 +18,15 @@ import org.akaza.openclinica.dao.submit.SubjectDAO;
 import org.akaza.openclinica.i18n.core.LocaleResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import com.sun.jersey.api.view.Viewable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.ModelAndView;
 
 /***
  * * Rest service for ODM clinical data usage
@@ -40,9 +37,8 @@ import com.sun.jersey.api.view.Viewable;
  *
  */
 
-@Path("/clinicaldata")
-@Component
-@Scope("prototype")
+@Controller
+@RequestMapping("/clinicaldata")
 public class ODMClinicaDataResource {
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(ODMClinicaDataResource.class);
@@ -79,6 +75,14 @@ public class ODMClinicaDataResource {
 		this.dataSource = dataSource;
 	}
 
+	private ResponseEntity<String> toStringResponse(String body, String contentType) {
+		MediaType mediaType = MediaType.parseMediaType(contentType);
+		if (body == null) {
+			return ResponseEntity.status(HttpStatus.NO_CONTENT).contentType(mediaType).build();
+		}
+		return ResponseEntity.ok().contentType(mediaType).body(body);
+	}
+
 	/**
 	 * @api {get} /rest/clinicaldata/json/view/:study/:subject/:event/:form Retrieve case report forms - JSON
 	 * @apiVersion 3.8.0
@@ -98,15 +102,33 @@ public class ODMClinicaDataResource {
 	 * @apiError NotFound   The resource was not found.
 	 *
 	 */
-	@GET
-	@Path("/json/view/{studyOID}/{studySubjectIdentifier}/{studyEventOID}/{formVersionOID}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public String getODMClinicaldata(@PathParam("studyOID") String studyOID,
-			@PathParam("formVersionOID") String formVersionOID,
-			@PathParam("studyEventOID") String studyEventOID,
-			@PathParam("studySubjectIdentifier") String studySubjectIdentifier,
-			@DefaultValue("n") @QueryParam("includeDNs") String includeDns,
-			@DefaultValue("n") @QueryParam("includeAudits") String includeAudits,@Context HttpServletRequest request) {
+	@RequestMapping(value = "/json/view/{studyOID}/{studySubjectIdentifier}/{studyEventOID}/{formVersionOID}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+	public ResponseEntity<String> getODMClinicaldataSpring(
+			@PathVariable("studyOID") String studyOID,
+			@PathVariable("formVersionOID") String formVersionOID,
+			@PathVariable("studyEventOID") String studyEventOID,
+			@PathVariable("studySubjectIdentifier") String studySubjectIdentifier,
+			@RequestParam(value = "includeDNs", required = false) String includeDns,
+			@RequestParam(value = "includeAudits", required = false) String includeAudits,
+			HttpServletRequest request) {
+		return toStringResponse(
+				getODMClinicaldata(
+						studyOID,
+						formVersionOID,
+						studyEventOID,
+						studySubjectIdentifier,
+						includeDns == null ? "n" : includeDns,
+						includeAudits == null ? "n" : includeAudits,
+						request),
+				"application/json;charset=UTF-8");
+	}
+
+	public String getODMClinicaldata(String studyOID,
+			String formVersionOID,
+			String studyEventOID,
+			String studySubjectIdentifier,
+			String includeDns,
+			String includeAudits, HttpServletRequest request) {
 		LOGGER.debug("Requesting clinical data resource");
 		boolean includeDN=false;
 		boolean includeAudit= false;
@@ -161,24 +183,24 @@ public class ODMClinicaDataResource {
 	 *       "error": "NoAccessRight"
 	 *     }
 	 */
-	@GET
-	@Path("/html/print/{studyOID}/{studySubjectIdentifier}/{eventOID}/{formVersionOID}")
-	public Viewable getPrintCRFController(@Context HttpServletRequest request,
-			@Context HttpServletResponse response,
-			@PathParam("studyOID") String studyOID,
-			@PathParam("studySubjectIdentifier") String studySubjectIdentifier,
-			@PathParam("eventOID") String eventOID,
-			@PathParam("formVersionOID") String formVersionOID,	@DefaultValue("n") @QueryParam("includeDNs") String includeDns,
-			@DefaultValue("n") @QueryParam("includeAudits") String includeAudits)
+	@RequestMapping(value = "/html/print/{studyOID}/{studySubjectIdentifier}/{eventOID}/{formVersionOID}", method = RequestMethod.GET)
+	public ModelAndView getPrintCRFController(HttpServletRequest request,
+			HttpServletResponse response,
+			@PathVariable("studyOID") String studyOID,
+			@PathVariable("studySubjectIdentifier") String studySubjectIdentifier,
+			@PathVariable("eventOID") String eventOID,
+			@PathVariable("formVersionOID") String formVersionOID,
+			@RequestParam(value = "includeDNs", required = false) String includeDns,
+			@RequestParam(value = "includeAudits", required = false) String includeAudits)
 			throws Exception {
 		request.setCharacterEncoding("UTF-8");
 		request.setAttribute("studyOID", studyOID);
 		request.setAttribute("studySubjectOID", getStudySubjectOID(studySubjectIdentifier,studyOID));
 		request.setAttribute("eventOID", eventOID);
 		request.setAttribute("formVersionOID", formVersionOID);
-		request.setAttribute("includeAudits", includeAudits);
-		request.setAttribute("includeDNs", includeDns);
-		return new Viewable("/WEB-INF/jsp/printcrf.jsp", null);
+		request.setAttribute("includeAudits", includeAudits == null ? "n" : includeAudits);
+		request.setAttribute("includeDNs", includeDns == null ? "n" : includeDns);
+		return new ModelAndView("/WEB-INF/jsp/printcrf.jsp");
 	}
 
 
@@ -206,15 +228,33 @@ public class ODMClinicaDataResource {
 	 *       "error": "NoAccessRight"
 	 *     }
 	 */
-	@GET
-	@Path("/xml/view/{studyOID}/{studySubjectIdentifier}/{studyEventOID}/{formVersionOID}")
-	@Produces(MediaType.TEXT_XML)
-	public String getODMMetadata(@PathParam("studyOID") String studyOID,
-			@PathParam("formVersionOID") String formVersionOID,
-			@PathParam("studySubjectIdentifier") String studySubjectIdentifier,
-			@PathParam("studyEventOID") String studyEventOID,
-			@DefaultValue("n") @QueryParam("includeDNs") String includeDns,
-			@DefaultValue("n") @QueryParam("includeAudits") String includeAudits,@Context HttpServletRequest request) {
+	@RequestMapping(value = "/xml/view/{studyOID}/{studySubjectIdentifier}/{studyEventOID}/{formVersionOID}", method = RequestMethod.GET, produces = "text/xml;charset=UTF-8")
+	public ResponseEntity<String> getODMMetadataSpring(
+			@PathVariable("studyOID") String studyOID,
+			@PathVariable("formVersionOID") String formVersionOID,
+			@PathVariable("studySubjectIdentifier") String studySubjectIdentifier,
+			@PathVariable("studyEventOID") String studyEventOID,
+			@RequestParam(value = "includeDNs", required = false) String includeDns,
+			@RequestParam(value = "includeAudits", required = false) String includeAudits,
+			HttpServletRequest request) {
+		return toStringResponse(
+				getODMMetadata(
+						studyOID,
+						formVersionOID,
+						studySubjectIdentifier,
+						studyEventOID,
+						includeDns == null ? "n" : includeDns,
+						includeAudits == null ? "n" : includeAudits,
+						request),
+				"text/xml;charset=UTF-8");
+	}
+
+	public String getODMMetadata(String studyOID,
+			String formVersionOID,
+			String studySubjectIdentifier,
+			String studyEventOID,
+			String includeDns,
+			String includeAudits, HttpServletRequest request) {
 		LOGGER.debug("Requesting clinical data resource");
 		boolean includeDN=false;
 		boolean includeAudit= false;

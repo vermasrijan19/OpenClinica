@@ -5,19 +5,17 @@ import java.util.Locale;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import com.sun.jersey.api.view.Viewable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.ModelAndView;
 
 import freemarker.template.Configuration;
 import freemarker.template.ObjectWrapper;
@@ -30,9 +28,8 @@ import freemarker.template.TemplateExceptionHandler;
  * @author jnyayapathi
  *
  */
-@Path("/metadata")
-@Component
-@Scope("prototype")
+@Controller
+@RequestMapping("/metadata")
 public class ODMMetadataRestResource {
 
 	  private static final Logger LOGGER = LoggerFactory.getLogger(ODMMetadataRestResource.class);
@@ -49,6 +46,14 @@ public void setMetadataCollectorResource(
 		MetadataCollectorResource metadataCollectorResource) {
 	this.metadataCollectorResource = metadataCollectorResource;
 }
+
+	private ResponseEntity<String> toStringResponse(String body, String contentType) {
+		MediaType mediaType = MediaType.parseMediaType(contentType);
+		if (body == null) {
+			return ResponseEntity.status(HttpStatus.NO_CONTENT).contentType(mediaType).build();
+		}
+		return ResponseEntity.ok().contentType(mediaType).body(body);
+	}
 
 
 	/**
@@ -84,10 +89,12 @@ public void setMetadataCollectorResource(
 	 *       "error": "NoAccessRight"
 	 *     }
 	 */
-	@GET
-	@Path("/xml/view/{studyOID}")
-	@Produces(MediaType.TEXT_XML)
-	public String getODMMetadata(@PathParam("studyOID") String studyOID ){
+	@RequestMapping(value = "/xml/view/{studyOID}", method = RequestMethod.GET, produces = "text/xml;charset=UTF-8")
+	public ResponseEntity<String> getODMMetadataSpring(@PathVariable("studyOID") String studyOID) {
+		return toStringResponse(getODMMetadata(studyOID), "text/xml;charset=UTF-8");
+	}
+
+	public String getODMMetadata(String studyOID ){
 		LOGGER.debug("returning here........"+studyOID);
 		//return "ODM";
 
@@ -129,10 +136,12 @@ public void setMetadataCollectorResource(
 	 *       "error": "NoAccessRight"
 	 *     }
 	 */
-	@GET
-	@Path("/json/view/{studyOID}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public String getODMMetadataJson(@PathParam("studyOID") String studyOID ){
+	@RequestMapping(value = "/json/view/{studyOID}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+	public ResponseEntity<String> getODMMetadataJsonSpring(@PathVariable("studyOID") String studyOID) {
+		return toStringResponse(getODMMetadataJson(studyOID), "application/json;charset=UTF-8");
+	}
+
+	public String getODMMetadataJson(String studyOID ){
 		LOGGER.debug("returning here........"+studyOID);
 		//return "ODM";
 
@@ -173,19 +182,18 @@ public void setMetadataCollectorResource(
 	 *       "error": "NoAccessRight"
 	 *     }
 	 */
-  @GET
-  @Path("/html/print/{studyOID}/{eventOID}/{formVersionOID}")
-  public Viewable getPrintCRFController(
-    @Context HttpServletRequest request,
-    @Context HttpServletResponse response,
-    @PathParam("studyOID") String studyOID,
-    @PathParam("eventOID") String eventOID,
-    @PathParam("formVersionOID") String formVersionOID
+  @RequestMapping(value = "/html/print/{studyOID}/{eventOID}/{formVersionOID}", method = RequestMethod.GET)
+  public ModelAndView getPrintCRFController(
+    HttpServletRequest request,
+    HttpServletResponse response,
+    @PathVariable("studyOID") String studyOID,
+    @PathVariable("eventOID") String eventOID,
+    @PathVariable("formVersionOID") String formVersionOID
     ) throws Exception {
       request.setAttribute("studyOID", studyOID);
       request.setAttribute("eventOID", eventOID);
       request.setAttribute("formVersionOID", formVersionOID);
-      return new Viewable("/WEB-INF/jsp/printcrf.jsp", null);
+      return new ModelAndView("/WEB-INF/jsp/printcrf.jsp");
   }
 
 
@@ -224,19 +232,27 @@ public void setMetadataCollectorResource(
  	*/
 
 
-  @GET
-	@Path("/xml/view/{studyOID}/{studyEventDefinitionOId}/{formVersionOID}")
-	@Produces(MediaType.TEXT_XML)
-	public String getODMMetadataWithFormVersionOID(@PathParam("studyOID") String studyOID,@PathParam("formVersionOID") String formVersionOID ){
+	@RequestMapping(value = "/xml/view/{studyOID}/{studyEventDefinitionOId}/{formVersionOID}", method = RequestMethod.GET, produces = "text/xml;charset=UTF-8")
+	public ResponseEntity<String> getODMMetadataWithFormVersionOIDSpring(
+			@PathVariable("studyOID") String studyOID,
+			@PathVariable("formVersionOID") String formVersionOID) {
+		return toStringResponse(getODMMetadataWithFormVersionOID(studyOID, formVersionOID), "text/xml;charset=UTF-8");
+	}
+
+	public String getODMMetadataWithFormVersionOID(String studyOID, String formVersionOID ){
 		LOGGER.debug("returning here........"+formVersionOID);
 		return metadataCollectorResource.collectODMMetadataForForm(studyOID,formVersionOID);
 	}
 
 
-    @GET
- 	@Path("/json/view/{studyOID}/{studyEventDefinitionOId}/{formVersionOID}")
- 	@Produces(MediaType.APPLICATION_JSON)
- 	public String getODMMetadataJson(@PathParam("studyOID") String studyOID,@PathParam("formVersionOID") String formVersionOID ){
+    @RequestMapping(value = "/json/view/{studyOID}/{studyEventDefinitionOId}/{formVersionOID}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    public ResponseEntity<String> getODMMetadataJsonSpring(
+    		@PathVariable("studyOID") String studyOID,
+    		@PathVariable("formVersionOID") String formVersionOID) {
+    	return toStringResponse(getODMMetadataJson(studyOID, formVersionOID), "application/json;charset=UTF-8");
+    }
+
+ 	public String getODMMetadataJson(String studyOID, String formVersionOID ){
  		LOGGER.debug("returning here........"+formVersionOID);
     	return metadataCollectorResource.collectODMMetadataJsonString(studyOID,formVersionOID);
  	}
