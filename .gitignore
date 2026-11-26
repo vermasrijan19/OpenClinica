@@ -27,3 +27,6 @@ ws/.DS_Store
 
 # netbeans
 nb-configuration.xml
+
+# Logback output from tests run without catalina.home
+*/catalina.home_IS_UNDEFINED/
