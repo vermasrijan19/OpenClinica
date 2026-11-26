@@ -352,17 +352,17 @@ public class CoreResources implements ResourceLoaderAware {
         DATAINFO.setProperty("ccts.waitBeforeCommit", "6000");
 
         String rss_url = DATAINFO.getProperty("rssUrl");
-        if (rss_url == null || rss_url.isEmpty())
-            rss_url = "http://blog.openclinica.com/feed/";
+        if (rss_url == null)
+            rss_url = "";
         DATAINFO.setProperty("rss.url", rss_url);
         String rss_more = DATAINFO.getProperty("rssMore");
-        if (rss_more == null || rss_more.isEmpty())
-            rss_more = "http://blog.openclinica.com/";
+        if (rss_more == null)
+            rss_more = "";
         DATAINFO.setProperty("rss.more", rss_more);
 
         String supportURL = DATAINFO.getProperty("supportURL");
         if (supportURL == null || supportURL.isEmpty())
-            supportURL = "https://www.openclinica.com/support";
+            supportURL = "";
         DATAINFO.setProperty("supportURL", supportURL);
 
         DATAINFO.setProperty("show_unique_id", "1");
@@ -373,9 +373,7 @@ public class CoreResources implements ResourceLoaderAware {
         logger.debug("DataInfo..." + DATAINFO);
 
         String designerURL = DATAINFO.getProperty("designerURL");
-        if (designerURL == null || designerURL.isEmpty()) {
-            DATAINFO.setProperty("designer.url", designerURL);
-        }
+        DATAINFO.setProperty("designer.url", designerURL != null ? designerURL : "");
 
         String xformEnabled = DATAINFO.getProperty("xformEnabled");
         if (xformEnabled == null || xformEnabled.isEmpty())
@@ -429,8 +427,8 @@ public class CoreResources implements ResourceLoaderAware {
     }
 
     private void setRuleDesignerProps() {
-
-        DATAINFO.setProperty("designer.url", DATAINFO.getProperty("designerURL"));
+        String designerURL = DATAINFO.getProperty("designerURL");
+        DATAINFO.setProperty("designer.url", designerURL != null ? designerURL : "");
     }
 
     private void setDatabaseProperties(String database) {

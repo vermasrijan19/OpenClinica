@@ -17,12 +17,6 @@
 <table border="0" cellpadding="0" width="100%"  class="footer_table" >
             <tr>
                 <td class="footer_bottom" style="width:240px">
-                <a href="http://www.openclinica.com" target="new"><fmt:message key="openclinica_portal" bundle="${resword}"/></a>
-                |
-                <a href="javascript:openDocWindow('https://docs.openclinica.com')"><fmt:message key="help" bundle="${resword}"/></a>
-                |
-                <a href="javascript:openDocWindow('https://openclinica.com/openclinica-privacy-policy/may-2018/')"><fmt:message key="privacy" bundle="${resword}"/></a>
-                |
                  <a href="${pageContext.request.contextPath}/Contact"><fmt:message key="contact" bundle="${resword}"/></a>
                 </td>
                 <td class="footer_bottom" >

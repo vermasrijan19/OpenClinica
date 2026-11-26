@@ -53,7 +53,7 @@
 	</c:otherwise>
 </c:choose>
 
-<h1><span class="title_manage"><fmt:message key="initial_data_entry_for" bundle="${resword}"/><c:out value="${section.crf.name}" /> <c:out value="${section.crfVersion.name}" /> <a href="javascript:openDocWindow('help/2_2_enrollSubject_Help.html#step2c')"><img src="images/bt_Help_Manage.gif" border="0" alt="<fmt:message key="help" bundle="${resword}"/>" title="<fmt:message key="help" bundle="${resword}"/>"></a></span></h1>
+<h1><span class="title_manage"><fmt:message key="initial_data_entry_for" bundle="${resword}"/><c:out value="${section.crf.name}" /> <c:out value="${section.crfVersion.name}" /></span></h1>
 </div>
 
 <form name="crfForm" method="POST" action="InitialDataEntry">

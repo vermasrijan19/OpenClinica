@@ -816,11 +816,7 @@ public class ViewRuleAssignmentTableFactory extends AbstractTableFactory {
             String runTime = (String) ((HashMap<Object, Object>) item).get("ruleSetRunTime");
             List<RuleActionBean> actions = (List<RuleActionBean>) ((HashMap<Object, Object>) item).get("theActions");
             String message = actions.get(0).getSummary();
-        //    if (isDesignerRequest)
-          //  {
-                value += testEditByDesignerBuilder(target, ruleOid, runTime, message);
-            //} else
-                if (ruleSetRule.getStatus() != Status.DELETED) {
+            if (ruleSetRule.getStatus() != Status.DELETED) {
                 value +=
                     viewLinkBuilder(ruleSetId) + executeLinkBuilder(ruleSetId, ruleId , target) + removeLinkBuilder(ruleSetRuleId, ruleSetId)
                         + extractXmlLinkBuilder(ruleSetRuleId) + testLinkBuilder(ruleSetRuleId);

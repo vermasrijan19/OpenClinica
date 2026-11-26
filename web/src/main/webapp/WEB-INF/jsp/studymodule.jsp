@@ -79,69 +79,11 @@
 
 </script>
 
- <c:if test="${moduleManager!= '' && moduleManager!= null}">
-
-      <script type="text/javascript">
-        jQuery(document).ready(function() {
-            jQuery('#requestRandomizationAccess').click(function() {
-                jQuery.blockUI({ message: jQuery('#requestRandomizationForm'), css:{left: "300px", top:"10px" } });
-            });
-
-            jQuery('#cancelRandomizationAccessRequest').click(function() {
-                jQuery.unblockUI();
-                $('#randomizationWarnings').empty();
-            });
-            // If there are warnings, we failed in a previous submission and should display the warnings on the popup window.
-            var warnings = "${regMessages}";
-            if (warnings.length > 0) {
-            	jQuery.blockUI({ message: jQuery('#requestRandomizationForm'), css:{left: "300px", top:"10px" } });
-            }
-        });
-
-        // Hide the popup window if the escape key is pressed
-        jQuery(document).keyup(function(keyPressed) {
-            if(keyPressed.keyCode === 27) {
-                $('#randomizationWarnings').empty();
-                jQuery.unblockUI();
-            }
-        });
-    </script>
-</c:if>
-
-
-<c:if test="${portalURL!= '' && portalURL!= null}">
-    <script type="text/javascript">
-        jQuery(document).ready(function() {
-            jQuery('#requestParticipateAccess').click(function() {
-                jQuery.blockUI({ message: jQuery('#requestParticipateForm'), css:{left: "300px", top:"10px" } });
-            });
-
-            jQuery('#cancelParticipateAccessRequest').click(function() {
-                jQuery.unblockUI();
-                $('#participateWarnings').empty();
-            });
-            // If there are warnings, we failed in a previous submission and should display the warnings on the popup window.
-            var warnings = "${regMessages}";
-            if (warnings.length > 0) {
-            	jQuery.blockUI({ message: jQuery('#requestParticipateForm'), css:{left: "300px", top:"10px" } });
-            }
-        });
-
-        // Hide the popup window if the escape key is pressed
-        jQuery(document).keyup(function(keyPressed) {
-            if(keyPressed.keyCode === 27) {
-                $('#participateWarnings').empty();
-                jQuery.unblockUI();
-            }
-        });
-    </script>
-</c:if>
-
 
   <form action="studymodule" method="post">
   <div>
       <h1><span class="title_manage"><c:out value="${currentStudy.name}"/>&nbsp;
-        <a href="javascript:openDocWindow('https://docs.openclinica.com/3.1/study-setup')"><img border="0" title="Help" alt="Help" src="../images/bt_Help_Manage.gif"/></a>
+
       </span></h1>
   </div>
   <div style="border: 1px solid #ccc; width:70%; padding-left:5px">
@@ -445,24 +387,20 @@
             <td>
                 <c:url var="createRule" value="/ImportRule"/>
                 <c:url var="viewRule" value="/ViewRuleAssignment"/>
-				<c:url var="ruleDesignerURL" value="${ruleDesignerURL}"/>
 
                 <c:choose>
                     <c:when test="${studyModuleStatus.rule == 1}">
                         <a href="${createRule}"><img src="../images/create_new.gif" border="0" alt="<fmt:message key="add2" bundle="${resword}"/>" title="<fmt:message key="add2" bundle="${resword}"/>"/></a>
-						<a href="${fn:escapeXml(ruleDesignerURL)}access?host=${hostPath}&app=${fn:escapeXml(contextPath)}&study_oid=${fn:escapeXml(study.oid)}&provider_user=${fn:escapeXml(userBean.name)}&path=${fn:escapeXml(path)}"><img src="../images/bt_EnterData.gif" border="0" alt="<fmt:message key="rule_designer" bundle="${resword}"/>" title="<fmt:message key="rule_designer" bundle="${resword}"/>"/></a>
                     </c:when>
                     <c:when test="${studyModuleStatus.rule == 2}">
                         <a href="${viewRule}"><img src="../images/bt_Details.gif" border="0" alt="<fmt:message key="view" bundle="${resword}"/>" title="<fmt:message key="view" bundle="${resword}"/>"/></a>
                         <a href="${createRule}"><img src="../images/create_new.gif" border="0" alt="<fmt:message key="add2" bundle="${resword}"/>" title="<fmt:message key="add2" bundle="${resword}"/>"/></a>
-						<a href="${fn:escapeXml(ruleDesignerURL)}access?host=${hostPath}&app=${fn:escapeXml(contextPath)}&study_oid=${fn:escapeXml(study.oid)}&provider_user=${fn:escapeXml(userBean.name)}&path=${fn:escapeXml(path)}"><img src="../images/bt_EnterData.gif" border="0" alt="<fmt:message key="rule_designer" bundle="${resword}"/>" title="<fmt:message key="rule_designer" bundle="${resword}"/>"/></a>
                         <%-- <a href="${viewRule}"><img src="../images/bt_Edit.gif" border="0"/></a> --%>
 
                     </c:when>
                     <c:otherwise>
                         <a href="${viewRule}"><img src="../images/bt_Details.gif" border="0" alt="<fmt:message key="view" bundle="${resword}"/>" title="<fmt:message key="view" bundle="${resword}"/>"/></a>
                         <a href="${createRule}"><img src="../images/create_new.gif" border="0" alt="<fmt:message key="add2" bundle="${resword}"/>" title="<fmt:message key="add2" bundle="${resword}"/>"/></a>
-						<a href="${fn:escapeXml(ruleDesignerURL)}access?host=${fn:escapeXml(hostPath)}&app=${fn:escapeXml(contextPath)}&study_oid=${fn:escapeXml(study.oid)}&provider_user=${fn:escapeXml(userBean.name)}&path=${fn:escapeXml(path)}"><img src="../images/bt_EnterData.gif" border="0" alt="<fmt:message key="rule_designer" bundle="${resword}"/>" title="<fmt:message key="rule_designer" bundle="${resword}"/>"/></a>
                         <%-- <a href="${viewRule}"><img src="../images/bt_Edit.gif" border="0"/></a> --%>
 
                     </c:otherwise>
@@ -588,6 +526,7 @@
   <br>
 
 
+      <c:if test="${(portalURL != '' && portalURL != null) || (moduleManager != '' && moduleManager != null)}">
       <table width="78%" class="contenttable" cellspacing="0" cellpadding="2">
           <thead>
           <tr>
@@ -629,12 +568,9 @@
                           <c:when test="${participateOCStatus == 'disabled' && !empty participateStatus}">
                               <a href="${fn:escapeXml(reactivateParticipate)}" id="reactivateParticipateAccess" name="reactivateParticipateAccess"><img src="../images/create_new.gif" border="0" alt="<fmt:message key="enable" bundle="${resword}"/>" title="<fmt:message key="enable" bundle="${resword}"/>"/></a>
                           </c:when>
-                          <c:when test="${participateOCStatus == 'disabled'}">
-                              <a href="javascript:;" id="requestParticipateAccess" name="requestParticipateAccess"><img src="../images/create_new.gif" border="0" alt="<fmt:message key="enable" bundle="${resword}"/>" title="<fmt:message key="enable" bundle="${resword}"/>"/></a>
-                          </c:when>
-                          <c:otherwise>
+                          <c:when test="${participateOCStatus != 'disabled'}">
                               <a href="${fn:escapeXml(deactivateParticipate)}" id="removeParticipateAccess" name="removeParticipateAccess"><img src="../images/bt_Remove.gif" border="0" alt="<fmt:message key="disable" bundle="${resword}"/>" title="<fmt:message key="disable" bundle="${resword}"/>"/></a>
-                          </c:otherwise>
+                          </c:when>
                       </c:choose>
                   </td>
               </tr>
@@ -658,7 +594,7 @@
                   </td>
                   <td>
                     <span id="randomizeURL">
-                              <a href="<c:url value="${randomizeURL}"/>" target="_blank">${randomizeURL}</a>
+                              ${fn:escapeXml(randomizeURL)}
                     </span>
                   </td>
                   <td>
@@ -668,15 +604,9 @@
                           <c:when test="${randomizationOCStatus == 'disabled' && !empty randomizationStatus}">
                               <a href="${fn:escapeXml(reactivateRandomization)}" id="reactivateRandomizationAccess" name="reactivateRandomizationAccess"><img src="../images/create_new.gif" border="0" alt="<fmt:message key="enable" bundle="${resword}"/>" title="<fmt:message key="enable" bundle="${resword}"/>"/></a>
                           </c:when>
-                          <c:when test="${randomizationOCStatus == 'disabled'}">
-                              <a href="javascript:;" id="requestRandomizationAccess" name="requestRandomizationAccess"><img src="../images/create_new.gif" border="0" alt="<fmt:message key="enable" bundle="${resword}"/>" title="<fmt:message key="enable" bundle="${resword}"/>"/></a>
-                          </c:when>
-                          <c:when test="${randomizationOCStatus == 'enabled' && empty randomizationStatus}">
-                              <a href="javascript:;" id="requestRandomizationAccess" name="requestRandomizationAccess"><img src="../images/create_new.gif" border="0" alt="<fmt:message key="enable" bundle="${resword}"/>" title="<fmt:message key="enable" bundle="${resword}"/>"/></a>
-                          </c:when>
-                          <c:otherwise>
+                          <c:when test="${randomizationOCStatus != 'disabled' && !empty randomizationStatus}">
                               <a href="${fn:escapeXml(deactivateRandomization)}" id="removeRandomizeAccess" name="removeRandomizeAccess"><img src="../images/bt_Remove.gif" border="0" alt="<fmt:message key="disable" bundle="${resword}"/>" title="<fmt:message key="disable" bundle="${resword}"/>"/></a>
-                          </c:otherwise>
+                          </c:when>
                       </c:choose>
                   </td>
               </tr>
@@ -684,6 +614,7 @@
           </c:if>
 
       </table>
+      </c:if>
       <br>
       <br>
 
@@ -715,52 +646,5 @@
       <input type="button" onclick="confirmCancel('${pageContext.request.contextPath}/MainMenu');" name="cancel" value="<fmt:message key="cancel" bundle="${resword}"/>" class="button_long">
   </div>
 </form>
-
-<c:if test="${portalURL!= '' && portalURL!= null}">
-    <div align="left" id="requestParticipateForm" class="participate-registration-div">
-        <form action="studymodule/${fn:escapeXml(currentStudy.oid)}/register" method="post">
-            <h1>
-                <fmt:message key="participate_reg_title" bundle="${resword}"/>
-                <a href="javascript:openDocWindow('https://docs.openclinica.com/participate/activate-openclinica-participate-your-study')">
-                    <img border="0" title="Help" alt="Help" src="../images/bt_Help_Manage.gif"/>
-                </a>
-            </h1>
-            <p class="participate-text"><fmt:message key="participate_reg_instructions_part1" bundle="${resword}"/></p>
-            <p class="participate-text"><fmt:message key="participate_reg_instructions_part2" bundle="${resword}"/></p>
-            <span class="participate-text"><c:out value="${participateURL.protocol}"/>:// </span>
-            <input type="text" name="hostName" id="hostName"/>
-            <span class="participate-text"> .<c:out value="${participateURL.host}"/><c:if test="${participateURL.port > 0}">:<c:out value="${participateURL.port}"/></c:if></span>
-            <br>
-            <c:if test="${!empty regMessages}">
-                <div id="participateWarnings" class="participate-warnings">
-                    <c:forEach var="message" items="${regMessages}">
-                        <c:out value="${message}" escapeXml="false"/>
-                        <br>
-                    </c:forEach>
-                </div>
-            </c:if>
-            <input type="submit" id="submitParticipateAccessRequest" class="button_medium" value="Request Access"/>
-            <input type="button" id="cancelParticipateAccessRequest" class="button" value="Cancel"/>
-        </form>
-    </div>
-</c:if>
-
- <c:if test="${moduleManager!= '' && moduleManager!= null}">
-    <div align="left" id="requestRandomizationForm" class="randomization-registration-div">
-        <form action="studymodule/${fn:escapeXml(currentStudy.oid)}/randomize" method="post">
-            <h1>
-                <fmt:message key="randomization_reg_title" bundle="${resword}"/>
-                <a href="javascript:openDocWindow('https://docs.openclinica.com/randomization/activate-openclinica-randomize-your-study')">
-                    <img border="0" title="Help" alt="Help" src="../images/bt_Help_Manage.gif"/>
-                </a>
-            </h1>
-            <p class="randomization-text"><fmt:message key="randomization_reg_instructions_part1" bundle="${resword}"/></p>
-            <br>
-            <input type="submit" id="submitRandomizationAccessRequest" class="button_medium" value="Request Access"/>
-            <input type="button" id="cancelRandomizationAccessRequest" class="button" value="Cancel"/>
-        </form>
-    </div>
-</c:if>
-
 
 <jsp:include page="include/footer.jsp"/>

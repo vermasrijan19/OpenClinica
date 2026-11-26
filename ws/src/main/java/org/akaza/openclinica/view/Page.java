@@ -29,7 +29,6 @@ public class Page {
     public final static Page LOGIN = new Page("/WEB-INF/jsp/login/login.jsp", "OpenClinica Login");
     public final static Page LOGIN_USER_ACCOUNT_DELETED =
         new Page("/WEB-INF/jsp/login/login.jsp" + "?action=userAccountDeleted", "Unsuccessful Login Due to Account Deletion");
-    public final static Page ENTERPRISE = new Page("/WEB-INF/jsp/login/enterprise.jsp", "OpenClinica Enterprise");
     /**
      * Page for logging out
      */

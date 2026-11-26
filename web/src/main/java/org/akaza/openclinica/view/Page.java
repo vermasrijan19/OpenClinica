@@ -26,7 +26,6 @@ public enum Page {
       	LOGIN("/WEB-INF/jsp/login/login.jsp", "OpenClinica Login"),
     	LOGIN_USER_ACCOUNT_DELETED("/WEB-INF/jsp/login/login.jsp" + "?action=userAccountDeleted",
                 "Unsuccessful Login Due to Account Deletion"),
-                ENTERPRISE("/WEB-INF/jsp/login/enterprise.jsp", "OpenClinica Enterprise"),
    /**
      * Page for logging out
      */

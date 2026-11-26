@@ -52,8 +52,7 @@
 <h1><span class="title_manage"><fmt:message key="create_a_new_CRF_case_report_form" bundle="${resworkflow}"/>
  </span>
 </h1>
-<p class="aka_para"><fmt:message key="can_download_blank_CRF_excel" bundle="${restext}"/><a href="DownloadVersionSpreadSheet?template=1"><b><fmt:message key="here" bundle="${resword}"/></b></a>.</p>
- <p class="aka_para"><fmt:message key="also_download_set_example_CRFs" bundle="${restext}"/><a href="http://www.openclinica.org/entities/entity_details.php?eid=151" target="_blank"><fmt:message key="here" bundle="${resword}"/></a>.
+<p class="aka_para"><fmt:message key="can_download_blank_CRF_excel" bundle="${restext}"/><a href="DownloadVersionSpreadSheet?template=1"><b><fmt:message key="here" bundle="${resword}"/></b></a>.
  <strong><fmt:message key="CRF_name_case_sensitive" bundle="${restext}"/></strong></p>
 
 <div style="font-family: Tahoma, Arial, Helvetica, Sans-Serif;font-size:12px;">

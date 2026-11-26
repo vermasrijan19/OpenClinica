@@ -5,14 +5,6 @@
 
 <fmt:setBundle basename="org.akaza.openclinica.i18n.words" var="resword"/>
 <fmt:setBundle basename="org.akaza.openclinica.i18n.workflow" var="resworkflow"/>
-<script language="JavaScript">
-function reportBug(versionNumber) {
- var bugtrack = "http://dev.openclinica.org/OpenClinica/bug.php?version=<fmt:message key="version_number" bundle="${resword}"/>&url=";
- bugtrack = bugtrack + window.location.href;
- openDocWindow(bugtrack);
-
-}
-</script>
 <!-- Breadcrumbs -->
 
 	<div class="breadcrumbs">
@@ -29,25 +21,6 @@ function reportBug(versionNumber) {
 				</td>
 
 <!-- Help and OpenClinica Feedback Buttons -->
-
-                <!-- 
-				<td valign="top">
-                    <table border="0" cellpadding="0" cellspacing="0">
-                        <tr>&nbsp;</tr>
-                        <tr>
-                <td style="white-space:nowrap">
-                    <a href="javascript:reportBug()">
-                        <span class="aka_font_general" style="font-size: 0.9em">
-                            <fmt:message key="openclinica_report_issue" bundle="${resword}"/></span>
-                    </a>
-                    |
-                    <a href="javascript:openDocWindow('<c:out value="${sessionScope.supportURL}" />')">
-                    <span class="aka_font_general" style="font-size: 0.9em"><fmt:message key="openclinica_feedback" bundle="${resword}"/></span></a>        </td>
-                        </tr>
-                    </table>
-				</td>
-				 -->
-
 <!-- end Help and OpenClinica Feedback Buttons -->
 
 	<td valign="top" align="right">

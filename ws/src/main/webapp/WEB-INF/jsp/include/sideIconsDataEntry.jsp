@@ -30,12 +30,6 @@
 			</tr>
 		</table>
 
-		<div class="sidebar_tab_content">
-
-		 <a href="#" onClick="openDefWindow('help/iconkey.html'); return false;"><fmt:message key="view_all_icons" bundle="${reswords}"/></a>
-
-		</div>
-
 		</td>
 	</tr>
 	<tr id="sidebar_IconKey_closed" style="display: none">

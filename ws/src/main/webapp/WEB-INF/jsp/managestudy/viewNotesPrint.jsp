@@ -15,7 +15,7 @@
 
 <h1><span class="title_manage">
 	<fmt:message key="view_discrepancy_notes" bundle="${resword}"/> 
-<!--<a href="javascript:openDocWindow('help/4_8_discrepancyNotes_Help.html')"><img src="images/bt_Help_Manage.gif" border="0" alt="<fmt:message key="help" bundle="${resword}"/>" title="<fmt:message key="help" bundle="${resword}"/>"></a>
+<!--
  -->
 </span></h1>
 

@@ -65,10 +65,7 @@ margin-top:20px;margin-top:10px;document.getElementById('centralContainer').styl
     <fmt:param><c:out value="${section.crf.name}"/></fmt:param>
     <fmt:param><c:out value="${section.crfVersion.name}"/></fmt:param>
 </fmt:message>
-   <a href="javascript:openDocWindow('help/2_2_enrollSubject_Help.html#step2c')"><img src="images/bt_Help_Manage.gif"
-                                                                                      border="0"
-                                                                                      alt="<fmt:message key="help" bundle="${resword}"/>"
-                                                                                      title="<fmt:message key="help" bundle="${resword}"/>"/></a></span>
+</span>
 </h1>
 
 <%--<c:if test="${tabId == null || tabId == 0 || fn:length(tabId) < 1}">

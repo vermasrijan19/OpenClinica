@@ -87,6 +87,7 @@ public class ListStudyServlet extends SecureController {
         table.hideColumnLink(2);
         table.hideColumnLink(6);
         table.setQuery("ListStudy", new HashMap());
+        table.addLink(resword.getString("create_a_new_study"), "CreateStudy");
         table.setRows(allStudyRows);
         table.computeDisplay();
 
