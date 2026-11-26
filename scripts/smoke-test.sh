@@ -3,7 +3,8 @@
 #
 # Usage: OC_USER=root OC_PASS=secret scripts/smoke-test.sh [base-url]
 #   base-url defaults to http://localhost:8085
-#   Without OC_PASS only the anonymous checks run.
+#   Without OC_PASS only the anonymous checks run. The authenticated checks
+#   create a temporary scheduled import job and delete it again.
 #   OC_USER/OC_PASS can also be kept in a private file (chmod 600) as
 #   shell assignments; default location ~/.config/openclinica/smoke-credentials,
 #   override with OC_CREDENTIALS=/path.
@@ -55,6 +56,11 @@ for path in includes/styles.css includes/NewLoginStyles.css includes/jmesa/jquer
 done
 fetch "$WS/"
 if [[ "$CODE" =~ ^(200|302|404)$ && "$CODE" != 000 ]]; then ok "web services app responds (HTTP $CODE)"; else bad "web services app: HTTP $CODE"; fi
+for wsdl in study/v1/studyWsdl.wsdl data/v1/dataWsdl.wsdl studySubject/v1/studySubjectWsdl.wsdl \
+            event/v1/eventWsdl.wsdl studyEventDefinition/v1/studyEventDefinitionWsdl.wsdl; do
+    fetch "$WS/ws/$wsdl"
+    if [[ "$CODE" == 200 ]] && grep -q 'wsdl:definitions' "$JAR.body"; then ok "WSDL $wsdl"; else bad "WSDL $wsdl: HTTP $CODE"; fi
+done
 
 if [[ -n "${OC_PASS:-}" ]]; then
     user="${OC_USER:-root}"
@@ -79,6 +85,22 @@ if [[ -n "${OC_PASS:-}" ]]; then
                 ok "$page ($TIME s)"
             fi
         done
+
+        # Scheduler round trip (Quartz): create an import job, pause, resume, delete it again.
+        job="smoketest_$$"
+        group="importTrigger"
+        fetch --data "action=confirmall&jobName=$job&jobDesc=smoke+test&contactEmail=&filePathDir=smoketest&hours=24&minutes=0&studyId=1" \
+            "$WEB/CreateJobImport"
+        if grep -q "successfully created a new job: $job" "$JAR.body"; then ok "scheduler: create job"; else bad "scheduler: create job (HTTP $CODE)"; fi
+        fetch "$WEB/ViewImportJob"
+        if grep -q "$job" "$JAR.body"; then ok "scheduler: job listed"; else bad "scheduler: job not listed"; fi
+        for step in pause resume; do
+            fetch "$WEB/PauseJob?tname=$job&gname=$group"
+            if [[ "$CODE" == 200 ]] && ! grep -qiE 'Exception|HTTP Status 500' "$JAR.body"; then ok "scheduler: $step"; else bad "scheduler: $step (HTTP $CODE)"; fi
+        done
+        fetch "$WEB/PauseJob?tname=$job&gname=$group&del=y"
+        fetch "$WEB/ViewImportJob"
+        if [[ "$CODE" == 200 ]] && ! grep -q "$job" "$JAR.body"; then ok "scheduler: delete job"; else bad "scheduler: job still listed after delete"; fi
     fi
 else
     echo "Skipping authenticated checks (set OC_PASS to enable)"

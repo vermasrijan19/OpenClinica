@@ -32,6 +32,7 @@
 		<spring-security.version>4.2.20.RELEASE</spring-security.version>
 		<jackson.version>2.12.7.1</jackson.version>
 		<spring-ws.version>2.4.7.RELEASE</spring-ws.version>
+		<postgresql.version>42.7.15</postgresql.version>
 		<db.test>localhost</db.test>
 		<db.test.name>openclinica-TEST-3.12</db.test.name>
 	</properties>
