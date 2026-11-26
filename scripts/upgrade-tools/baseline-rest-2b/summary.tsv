@@ -1,0 +1,24 @@
+/rest/metadata/xml/view/S_DEFAULTS1	200	text/xml;charset=utf-8	997bbc5eb911	1376
+/rest/metadata/json/view/S_DEFAULTS1	200	application/json;charset=utf-8	cbfa57b6122c	1218
+/rest/metadata/xml/view/S_DEFAULTS1/*/*	200	text/xml;charset=utf-8	997bbc5eb911	1376
+/rest/metadata/json/view/S_DEFAULTS1/*/*	200	application/json;charset=utf-8	cbfa57b6122c	1218
+/rest/metadata/html/print/S_DEFAULTS1/*/*	200	text/html;charset=utf-8	5352aac54fd0	6335
+/rest/clinicaldata/json/view/S_DEFAULTS1/*/*/*	200	application/json;charset=utf-8	cbfa57b6122c	1218
+/rest/clinicaldata/xml/view/S_DEFAULTS1/*/*/*	200	text/xml;charset=utf-8	997bbc5eb911	1376
+/rest/clinicaldata/html/print/S_DEFAULTS1/*/*/*	200	text/html;charset=utf-8	60d210367575	6338
+/rest2/openrosa/S_DEFAULTS1/formList	204	text/xml;charset=utf-8	d41d8cd98f00	0
+/rest2/openrosa/S_DEFAULTS1/manifest	204	text/xml;charset=utf-8	d41d8cd98f00	0
+/rest/metadata/xml/view/NOSUCHSTUDY	500	text/html;charset=utf-8	57ba67b4b24b	7503
+/pages/healthcheck/	404	text/html;charset=utf-8	676c4f11c705	7094
+/rest2/openrosa/S_DEFAULTS1/formXml	204	application/xml;charset=utf-8	d41d8cd98f00	0
+/rest2/openrosa/S_DEFAULTS1/formXml?formID=F_NOPE	204	application/xml;charset=utf-8	d41d8cd98f00	0
+/rest2/openrosa/S_DEFAULTS1/getSchedule	500	text/html;charset=utf-8	57ba67b4b24b	7503
+/rest2/openrosa/S_DEFAULTS1/downloadMedia	204		d41d8cd98f00	0
+/rest/metadata/pdf/print/S_DEFAULTS1/*/*	404	text/html;charset=utf-8	676c4f11c705	7094
+/rest/clinicaldata/html/print/S_DEFAULTS1/*/*/*?includeDNs=y&includeAudits=y	200	text/html;charset=utf-8	c40be9a792ee	6338
+/rest/clinicaldata/xml/view/S_DEFAULTS1/*/*/*?includeDNs=&includeAudits=y	200	text/xml;charset=utf-8	997bbc5eb911	1376
+/rest/metadata/nosuchthing	500	text/html;charset=utf-8	57ba67b4b24b	7503
+/rest/metadata/xml/view/*	403	text/html;charset=utf-8	a854de61bcc0	19293
+/rest/metadata/xml/view/S_DEFAULTS1	200	text/xml;charset=utf-8	997bbc5eb911	1376
+/rest/clinicaldata/json/view/*/*/*/*	403	text/html;charset=utf-8	a854de61bcc0	19293
+/rest/clinicaldata/json/view/S_DEFAULTS1/*/*/*	200	application/json;charset=utf-8	cbfa57b6122c	1218
